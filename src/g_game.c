@@ -2949,6 +2949,10 @@ void G_LoadGameData(void)
 	UINT8 recmares;
 	INT32 curmare;
 
+	// don't override the server's emblems and unlocks
+	if (netgame && !server)
+		return;
+
 	// Clear things so previously read gamedata doesn't transfer
 	// to new gamedata
 	G_ClearRecords(); // main and nights records
@@ -3106,6 +3110,10 @@ void G_SaveGameData(void)
 
 	if (!gamedataloaded)
 		return; // If never loaded (-nodata), don't save
+
+	// don't save the server's emblems and unlocks.
+	if (netgame && !server)
+		return;
 
 	save_p = savebuffer = (UINT8 *)malloc(GAMEDATASIZE);
 	if (!save_p)
