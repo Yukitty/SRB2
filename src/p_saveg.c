@@ -55,6 +55,7 @@ static inline void P_NetArchiveEmblems(void)
 
 	// These should be synchronized before savegame loading by the wad files being the same anyway,
 	// but just in case, for now, we'll leave them here for testing. It would be very bad if they mismatch.
+	WRITEUINT8(save_p, (UINT8)savemoddata);
 	WRITEINT32(save_p, numemblems);
 	WRITEINT32(save_p, numextraemblems);
 
@@ -155,8 +156,11 @@ static inline void P_NetUnArchiveEmblems(void)
 	if (READUINT32(save_p) != ARCHIVEBLOCK_EMBLEMS)
 		I_Error("Bad $$$.sav at archive block Emblems");
 
-	WRITEINT32(save_p, numemblems);
-	WRITEINT32(save_p, numextraemblems);
+	savemoddata = (boolean)READUINT8(save_p); // this one is actually necessary because savemoddata stays false otherwise for some reason.
+	if (numemblems != READINT32(save_p))
+		I_Error("numemblems mismatch");
+	if (numextraemblems != READINT32(save_p))
+		I_Error("numextraemblems mismatch");
 
 	// The rest of this is lifted straight from G_LoadGameData in g_game.c
 	// TODO: Optimize this to only read information about emblems, unlocks, etc. which actually exist
