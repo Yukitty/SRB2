@@ -792,6 +792,12 @@ static void IdentifyVersion(void)
 
 	// if you change the ordering of this or add/remove a file, be sure to update the md5
 	// checking in D_SRB2Main
+#ifdef EMSCRIPTEN
+	D_AddFile(va(pandf,srb2waddir,"zones.dta"));
+	D_AddFile(va(pandf,srb2waddir, "player.dta"));
+	D_AddFile(va(pandf,srb2waddir,"patch.dta"));
+	//D_AddFile(va(pandf,srb2waddir,"music.dta"));
+#else
 
 	// Add the maps
 	D_AddFile(va(pandf,srb2waddir,"zones.dta"));
@@ -819,6 +825,7 @@ static void IdentifyVersion(void)
 		else if (ms == 0)
 			I_Error("File %s has been modified with non-music lumps",musicfile);
 	}
+#endif
 #endif
 }
 
@@ -1087,6 +1094,10 @@ void D_SRB2Main(void)
 #endif
 	D_CleanFile();
 
+#ifdef EMSCRIPTEN
+	mainwads = 4; // no rings.dta
+#else
+
 #if 1 // md5s last updated 8/05/14
 
 	// Check MD5s of autoloaded files
@@ -1100,6 +1111,7 @@ void D_SRB2Main(void)
 #endif
 
 	mainwads = 5; // there are 5 wads not to unload
+#endif
 
 	cht_Init();
 
@@ -1165,6 +1177,10 @@ void D_SRB2Main(void)
 
 	// setting up sound
 	CONS_Printf("S_Init(): Setting up sound.\n");
+#ifdef EMSCRIPTEN
+	nosound = true;
+	nomidimusic = nodigimusic = true;
+#else
 	if (M_CheckParm("-nosound"))
 		nosound = true;
 	if (M_CheckParm("-nomusic")) // combines -nomidimusic and -nodigmusic
@@ -1176,6 +1192,7 @@ void D_SRB2Main(void)
 		if (M_CheckParm("-nodigmusic"))
 			nodigimusic = true; // WARNING: DOS version initmusic in I_StartupSound
 	}
+#endif
 	I_StartupSound();
 	I_InitMusic();
 	S_Init(cv_soundvolume.value, cv_digmusicvolume.value, cv_midimusicvolume.value);
