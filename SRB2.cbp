@@ -333,7 +333,12 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="-DNOASM" />
 					<Add option="-DEMSCRIPTEN" />
 					<Add option="-DNONET" />
+					<Add option="-DNOMD5" />
 				</Compiler>
+				<Linker>
+					<Add option="-s TOTAL_MEMORY=536870912" />
+					<Add option="--preload-file bin/Resources/webdata@/" />
+				</Linker>
 			</Target>
 			<Target title="Release Emscripten/SDL">
 				<Option output="bin/Emscripten/Release/srb2.html" prefix_auto="1" extension_auto="0" />
@@ -355,7 +360,12 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="-DNOASM" />
 					<Add option="-DEMSCRIPTEN" />
 					<Add option="-DNONET" />
+					<Add option="-DNOMD5" />
 				</Compiler>
+				<Linker>
+					<Add option="-s TOTAL_MEMORY=536870912" />
+					<Add option="--preload-file bin/Resources/webdata@/" />
+				</Linker>
 			</Target>
 			<Target title="Debug Any/Dummy">
 				<Option output="bin/dummy/Debug/srb2dummy" prefix_auto="1" extension_auto="1" />
@@ -2949,8 +2959,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Release Mingw64/DirectX" />
 			<Option target="Debug Emscripten/SDL" />
 			<Option target="Release Emscripten/SDL" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/lzf.h">
 			<Option target="Debug Native/SDL" />
@@ -3392,8 +3400,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Release Mingw64/SDL" />
 			<Option target="Debug Mingw64/DirectX" />
 			<Option target="Release Mingw64/DirectX" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/md5.h">
 			<Option target="Debug Native/SDL" />
@@ -3410,8 +3416,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Release Mingw64/SDL" />
 			<Option target="Debug Mingw64/DirectX" />
 			<Option target="Release Mingw64/DirectX" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/mserv.c">
 			<Option compilerVar="CC" />
@@ -4456,6 +4460,35 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Debug Emscripten/SDL" />
 			<Option target="Release Emscripten/SDL" />
 		</Unit>
+		<Unit filename="src/sdl12/i_main.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
+		<Unit filename="src/sdl12/i_net.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
+		<Unit filename="src/sdl12/i_system.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
+		<Unit filename="src/sdl12/i_video.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
+		<Unit filename="src/sdl12/mixer_sound.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
+		<Unit filename="src/sdl12/sdlmain.h">
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
 		<Unit filename="src/sdl/IMG_xpm.c">
 			<Option compilerVar="CC" />
 			<Option compile="0" />
@@ -4648,11 +4681,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Debug Mingw64/SDL" />
 			<Option target="Release Mingw64/SDL" />
 		</Unit>
-		<Unit filename="src/sdl12/i_main.c">
-			<Option compilerVar="CC" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
-		</Unit>
 		<Unit filename="src/sdl/i_net.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug Native/SDL" />
@@ -4663,11 +4691,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Release Linux/SDL" />
 			<Option target="Debug Mingw64/SDL" />
 			<Option target="Release Mingw64/SDL" />
-		</Unit>
-		<Unit filename="src/sdl12/i_net.c">
-			<Option compilerVar="CC" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/sdl/i_system.c">
 			<Option compilerVar="CC" />
@@ -4680,11 +4703,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Debug Mingw64/SDL" />
 			<Option target="Release Mingw64/SDL" />
 		</Unit>
-		<Unit filename="src/sdl12/i_system.c">
-			<Option compilerVar="CC" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
-		</Unit>
 		<Unit filename="src/sdl/i_video.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug Native/SDL" />
@@ -4696,11 +4714,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Debug Mingw64/SDL" />
 			<Option target="Release Mingw64/SDL" />
 		</Unit>
-		<Unit filename="src/sdl12/i_video.c">
-			<Option compilerVar="CC" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
-		</Unit>
 		<Unit filename="src/sdl/mixer_sound.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug Mingw/SDL" />
@@ -4709,11 +4722,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Release Linux/SDL" />
 			<Option target="Debug Mingw64/SDL" />
 			<Option target="Release Mingw64/SDL" />
-		</Unit>
-		<Unit filename="src/sdl12/mixer_sound.c">
-			<Option compilerVar="CC" />
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/sdl/ogl_sdl.c">
 			<Option compilerVar="CC" />
@@ -4760,10 +4768,6 @@ HW3SOUND for 3D hardware sound  support
 			<Option target="Release Linux/SDL" />
 			<Option target="Debug Mingw64/SDL" />
 			<Option target="Release Mingw64/SDL" />
-		</Unit>
-		<Unit filename="src/sdl12/sdlmain.h">
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/sounds.c">
 			<Option compilerVar="CC" />
@@ -4954,13 +4958,13 @@ HW3SOUND for 3D hardware sound  support
 		</Unit>
 		<Unit filename="src/vid_copy.s">
 			<Option compilerVar="CC" />
-			<Option compiler="avrgcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
+			<Option compiler="gcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
+			<Option compiler="ppcgcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
 			<Option compiler="gnu_gcc_compiler_for_mingw32" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
-			<Option compiler="gnu_gcc_compiler_for_mingw64" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
 			<Option compiler="armelfgcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
 			<Option compiler="tricoregcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
-			<Option compiler="ppcgcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
-			<Option compiler="gcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
+			<Option compiler="avrgcc" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
+			<Option compiler="gnu_gcc_compiler_for_mingw64" use="1" buildCommand="$compiler $options -x assembler-with-cpp -c $file -o $object" />
 			<Option target="Debug Native/SDL" />
 			<Option target="Release Native/SDL" />
 			<Option target="Debug Linux/SDL" />

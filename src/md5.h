@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#ifndef _MD5_H
+#if !defined(_MD5_H) && !defined(NOMD5)
 #define _MD5_H 1
 
 #include <stdio.h>
