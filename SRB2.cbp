@@ -320,11 +320,9 @@ HW3SOUND for 3D hardware sound  support
 				<Option compiler="emcc" />
 				<Compiler>
 					<Add option="-g" />
-					<Add option="-D_GNU_SOURCE=1" />
-					<Add option="-DSTDC_HEADERS" />
-					<Add option="-D__USE_MINGW_ANSI_STDIO=0" />
-					<Add option="-DUSE_WGL_SWAP" />
-					<Add option="-DDIRECTFULLSCREEN" />
+					<Add option="-s ASSERTIONS=2" />
+					<Add option="-s SAFE_HEAP=1" />
+					<Add option="-Oz" />
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DPARANOIA" />
@@ -336,7 +334,9 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="-DNOMD5" />
 				</Compiler>
 				<Linker>
-					<Add option="-s TOTAL_MEMORY=536870912" />
+					<Add option="-s ASSERTIONS=2" />
+					<Add option="-s SAFE_HEAP=1" />
+					<Add option="-s TOTAL_MEMORY=268435456" />
 					<Add option="--preload-file bin/Resources/webdata@/" />
 				</Linker>
 			</Target>
@@ -347,23 +347,17 @@ HW3SOUND for 3D hardware sound  support
 				<Option type="0" />
 				<Option compiler="emcc" />
 				<Compiler>
-					<Add option="-O2" />
-					<Add option="-D_GNU_SOURCE=1" />
-					<Add option="-DSTDC_HEADERS" />
-					<Add option="-D__USE_MINGW_ANSI_STDIO=0" />
-					<Add option="-DUSE_WGL_SWAP" />
-					<Add option="-DDIRECTFULLSCREEN" />
+					<Add option="-Oz" />
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DNDEBUG" />
-					<Add option="-DCOMPVERSION" />
 					<Add option="-DNOASM" />
 					<Add option="-DEMSCRIPTEN" />
 					<Add option="-DNONET" />
 					<Add option="-DNOMD5" />
 				</Compiler>
 				<Linker>
-					<Add option="-s TOTAL_MEMORY=536870912" />
+					<Add option="-s TOTAL_MEMORY=268435456" />
 					<Add option="--preload-file bin/Resources/webdata@/" />
 				</Linker>
 			</Target>
