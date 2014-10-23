@@ -785,6 +785,10 @@ void I_OutputMsg(const char *fmt, ...)
 	DEFAULTFONTBGR, DEFAULTFONTBGG, DEFAULTFONTBGB, DEFAULTFONTBGA, txt);
 #endif
 
+#ifdef EMSCRIPTEN
+	printf("%s",txt);
+#endif
+
 #if defined (_WIN32) && !defined (_XBOX) && defined (_MSC_VER)
 	OutputDebugStringA(txt);
 #endif
@@ -2296,10 +2300,10 @@ void I_Quit(void)
 	I_ShutdownGraphics();
 	I_ShutdownInput();
 	I_ShutdownSystem();
+#ifndef EMSCRIPTEN
 #ifndef _arch_dreamcast
 	SDL_Quit();
 #endif
-#ifndef EMSCRIPTEN
 	/* if option -noendtxt is set, don't print the text */
 	if (!M_CheckParm("-noendtxt") && W_CheckNumForName("ENDOOM") != LUMPERROR)
 	{
@@ -2425,9 +2429,15 @@ void I_Error(const char *error, ...)
 	va_start(argptr,error);
 	if (!framebuffer)
 	{
+#ifdef EMSCRIPTEN
+		printf("Error: ");
+		vprintf(error,argptr);
+		printf("\n");
+#else
 		fprintf(stderr, "Error: ");
 		vfprintf(stderr,error,argptr);
 		fprintf(stderr, "\n");
+#endif
 	}
 	va_end(argptr);
 
@@ -2454,7 +2464,7 @@ void I_Error(const char *error, ...)
 	I_ShutdownGraphics();
 	I_ShutdownInput();
 	I_ShutdownSystem();
-#ifndef _arch_dreamcast
+#if !defined(_arch_dreamcast) && !defined(EMSCRIPTEN)
 	SDL_Quit();
 #endif
 #ifdef MAC_ALERT
