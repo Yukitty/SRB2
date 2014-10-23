@@ -85,7 +85,7 @@ void __set_fpscr(long); // in libgcc / kernel's startup.s?
 #pragma warning(default : 4214 4244)
 #endif
 
-#if SDL_VERSION_ATLEAST(1,2,7) && !defined (DC)
+#if SDL_VERSION_ATLEAST(1,2,7) && !defined (DC) && !defined (EMSCRIPTEN)
 #include "SDL_cpuinfo.h" // 1.2.7 or greater
 #define HAVE_SDLCPUINFO
 #endif
@@ -104,8 +104,10 @@ void __set_fpscr(long); // in libgcc / kernel's startup.s?
 #ifdef FREEBSD
 #include <kvm.h>
 #endif
+#ifndef EMSCRIPTEN
 #include <nlist.h>
 #include <sys/vmmeter.h>
+#endif
 #endif
 #endif
 #endif
@@ -234,7 +236,9 @@ static char returnWadPath[256];
 #include "../d_net.h"
 #include "../g_game.h"
 #include "../filesrch.h"
+#ifndef EMSCRIPTEN
 #include "endtxt.h"
+#endif
 #include "sdlmain.h"
 
 #include "../i_joy.h"
@@ -2295,12 +2299,14 @@ void I_Quit(void)
 #ifndef _arch_dreamcast
 	SDL_Quit();
 #endif
+#ifndef EMSCRIPTEN
 	/* if option -noendtxt is set, don't print the text */
 	if (!M_CheckParm("-noendtxt") && W_CheckNumForName("ENDOOM") != LUMPERROR)
 	{
 		printf("\r");
 		ShowEndTxt();
 	}
+#endif
 death:
 	W_Shutdown();
 #ifdef GP2X
@@ -2543,7 +2549,7 @@ void I_GetDiskFreeSpace(INT64 *freespace)
 #if defined (_arch_dreamcast) || defined (_PSP)
 	*freespace = 0;
 #elif defined (__unix__) || defined(__APPLE__) || defined (UNIXCOMMON)
-#if defined (SOLARIS) || defined (__HAIKU__) || defined (_WII) || defined (_PS3)
+#if defined (SOLARIS) || defined (__HAIKU__) || defined (_WII) || defined (_PS3) || defined (EMSCRIPTEN)
 	*freespace = INT32_MAX;
 	return;
 #else // Both Linux and BSD have this, apparently.

@@ -1720,7 +1720,9 @@ static void SDLWMSet(void)
 	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
 #endif
+#ifndef EMSCRIPTEN
 	SDL_EventState(SDL_VIDEORESIZE, SDL_IGNORE);
+#endif
 }
 
 static void* SDLGetDirect(void)

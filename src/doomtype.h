@@ -153,7 +153,7 @@ typedef long ssize_t;
 	#endif
 #endif //macintosh
 
-#if defined (PC_DOS) || defined (_WIN32) || defined (_WII) || defined (_PSP) || defined (_arch_dreamcast) || defined (__HAIKU__) || defined(_NDS)  || defined(_PS3)
+#if defined (PC_DOS) || defined (_WIN32) || defined (_WII) || defined (_PSP) || defined (_arch_dreamcast) || defined (__HAIKU__) || defined(_NDS)  || defined(_PS3) || defined(EMSCRIPTEN)
 #define HAVE_DOSSTR_FUNCS
 #endif
 
@@ -164,7 +164,7 @@ int strlwr(char *n); // from dosstr.c
 
 #include <stddef.h> // for size_t
 
-#ifndef __APPLE__
+#if !defined (__APPLE__) && !defined (EMSCRIPTEN)
 size_t strlcat(char *dst, const char *src, size_t siz);
 size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif

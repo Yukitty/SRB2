@@ -8046,7 +8046,7 @@ static fixed_t find_const(const char **rword)
 		return r;
 	}
 	if (!*(word+1) && // Turn a single A-z symbol into numbers, like sprite frames.
-	 (*word >= 'A' && *word <= 'Z') || (*word >= 'a' && *word <= 'z')) {
+	 ((*word >= 'A' && *word <= 'Z') || (*word >= 'a' && *word <= 'z'))) {
 		r = R_Char2Frame(*word);
 		free(word);
 		return r;

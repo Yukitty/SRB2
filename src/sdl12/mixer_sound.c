@@ -67,7 +67,7 @@ UINT8 sound_started = false;
 static boolean midimode;
 static Mix_Music *music;
 static UINT8 music_volume, midi_volume, sfx_volume;
-static float loop_point;
+static double loop_point;
 
 #ifdef HAVE_LIBGME
 static Music_Emu *gme;
@@ -418,7 +418,9 @@ void I_SetSfxVolume(UINT8 volume)
 static void music_loop(void)
 {
 	Mix_PlayMusic(music, 0);
+#ifndef EMSCRIPTEN // FUCK
 	Mix_SetMusicPosition(loop_point);
+#endif
 }
 
 #ifdef HAVE_LIBGME

@@ -5649,6 +5649,8 @@ void A_RecyclePowers(mobj_t *actor)
 #ifdef HAVE_BLUA
 	if (LUA_CallAction("A_RecyclePowers", actor))
 		return;
+#else
+	(void)actor;
 #endif
 
 	if (!multiplayer)
@@ -5743,6 +5745,8 @@ void A_RecyclePowers(mobj_t *actor)
 #ifdef HAVE_BLUA
 	if (LUA_CallAction("A_RecyclePowers", actor))
 		return;
+#else
+	(void)actor;
 #endif
 	if (!multiplayer)
 		return;
