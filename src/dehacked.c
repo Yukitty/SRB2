@@ -29,6 +29,7 @@
 #include "r_data.h"
 #include "r_sky.h"
 #include "fastcmp.h"
+#include "s_sound.h"
 #include "lua_script.h"
 #include "lua_hook.h"
 
