@@ -418,7 +418,7 @@ void I_SetSfxVolume(UINT8 volume)
 static void music_loop(void)
 {
 	Mix_PlayMusic(music, 0);
-#ifndef EMSCRIPTEN // FUCK
+#ifndef __EMSCRIPTEN__ // FUCK
 	Mix_SetMusicPosition(loop_point);
 #endif
 }

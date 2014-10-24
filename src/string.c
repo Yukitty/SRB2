@@ -15,7 +15,7 @@
 #include <string.h>
 #include "doomdef.h"
 
-#if !defined (__APPLE__) && !defined (EMSCRIPTEN)
+#if !defined (__APPLE__) && !defined (__EMSCRIPTEN__)
 // Like the OpenBSD version, but it doesn't check for src not being a valid
 // C string.
 size_t strlcat(char *dst, const char *src, size_t siz)

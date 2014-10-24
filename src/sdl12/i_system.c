@@ -85,7 +85,7 @@ void __set_fpscr(long); // in libgcc / kernel's startup.s?
 #pragma warning(default : 4214 4244)
 #endif
 
-#if SDL_VERSION_ATLEAST(1,2,7) && !defined (DC) && !defined (EMSCRIPTEN)
+#if SDL_VERSION_ATLEAST(1,2,7) && !defined (DC) && !defined (__EMSCRIPTEN__)
 #include "SDL_cpuinfo.h" // 1.2.7 or greater
 #define HAVE_SDLCPUINFO
 #endif
@@ -104,7 +104,7 @@ void __set_fpscr(long); // in libgcc / kernel's startup.s?
 #ifdef FREEBSD
 #include <kvm.h>
 #endif
-#ifndef EMSCRIPTEN
+#ifndef __EMSCRIPTEN__
 #include <nlist.h>
 #include <sys/vmmeter.h>
 #endif
@@ -236,7 +236,7 @@ static char returnWadPath[256];
 #include "../d_net.h"
 #include "../g_game.h"
 #include "../filesrch.h"
-#ifndef EMSCRIPTEN
+#ifndef __EMSCRIPTEN__
 #include "endtxt.h"
 #endif
 #include "sdlmain.h"
@@ -785,7 +785,7 @@ void I_OutputMsg(const char *fmt, ...)
 	DEFAULTFONTBGR, DEFAULTFONTBGG, DEFAULTFONTBGB, DEFAULTFONTBGA, txt);
 #endif
 
-#ifdef EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 	printf("%s",txt);
 #endif
 
@@ -2300,7 +2300,7 @@ void I_Quit(void)
 	I_ShutdownGraphics();
 	I_ShutdownInput();
 	I_ShutdownSystem();
-#ifndef EMSCRIPTEN
+#ifndef __EMSCRIPTEN__
 #ifndef _arch_dreamcast
 	SDL_Quit();
 #endif
@@ -2429,7 +2429,7 @@ void I_Error(const char *error, ...)
 	va_start(argptr,error);
 	if (!framebuffer)
 	{
-#ifdef EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 		printf("Error: ");
 		vprintf(error,argptr);
 		printf("\n");
@@ -2464,7 +2464,7 @@ void I_Error(const char *error, ...)
 	I_ShutdownGraphics();
 	I_ShutdownInput();
 	I_ShutdownSystem();
-#if !defined(_arch_dreamcast) && !defined(EMSCRIPTEN)
+#if !defined(_arch_dreamcast) && !defined(__EMSCRIPTEN__)
 	SDL_Quit();
 #endif
 #ifdef MAC_ALERT
@@ -2559,7 +2559,7 @@ void I_GetDiskFreeSpace(INT64 *freespace)
 #if defined (_arch_dreamcast) || defined (_PSP)
 	*freespace = 0;
 #elif defined (__unix__) || defined(__APPLE__) || defined (UNIXCOMMON)
-#if defined (SOLARIS) || defined (__HAIKU__) || defined (_WII) || defined (_PS3) || defined (EMSCRIPTEN)
+#if defined (SOLARIS) || defined (__HAIKU__) || defined (_WII) || defined (_PS3) || defined (__EMSCRIPTEN__)
 	*freespace = INT32_MAX;
 	return;
 #else // Both Linux and BSD have this, apparently.

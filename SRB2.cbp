@@ -321,23 +321,20 @@ HW3SOUND for 3D hardware sound  support
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-s ASSERTIONS=2" />
-					<Add option="-s SAFE_HEAP=1" />
-					<Add option="-Oz" />
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DPARANOIA" />
 					<Add option="-DRANGECHECK" />
 					<Add option="-D_DEBUG" />
 					<Add option="-DNOASM" />
-					<Add option="-DEMSCRIPTEN" />
 					<Add option="-DNONET" />
 					<Add option="-DNOMD5" />
+					<Add option="-DNOMUMBLE" />
 				</Compiler>
 				<Linker>
-					<Add option="-s ASSERTIONS=2" />
-					<Add option="-s SAFE_HEAP=1" />
-					<Add option="-s TOTAL_MEMORY=268435456" />
 					<Add option="--preload-file bin/Resources/webdata@/" />
+					<Add option="-s ASSERTIONS=2" />
+					<Add option="-s TOTAL_MEMORY=402653184" />
 				</Linker>
 			</Target>
 			<Target title="Release Emscripten/SDL">
@@ -347,18 +344,19 @@ HW3SOUND for 3D hardware sound  support
 				<Option type="0" />
 				<Option compiler="emcc" />
 				<Compiler>
-					<Add option="-Oz" />
+					<Add option="-O2" />
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DNDEBUG" />
 					<Add option="-DNOASM" />
-					<Add option="-DEMSCRIPTEN" />
 					<Add option="-DNONET" />
 					<Add option="-DNOMD5" />
+					<Add option="-DNOMUMBLE" />
 				</Compiler>
 				<Linker>
-					<Add option="-s TOTAL_MEMORY=268435456" />
 					<Add option="--preload-file bin/Resources/webdata@/" />
+					<Add option="-O2" />
+					<Add option="-s TOTAL_MEMORY=402653184" />
 				</Linker>
 			</Target>
 			<Target title="Debug Any/Dummy">

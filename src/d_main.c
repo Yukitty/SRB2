@@ -90,6 +90,10 @@ int	snprintf(char *str, size_t n, const char *fmt, ...);
 #include "hardware/hw3sound.h"
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 //
 // DEMO LOOP
 //
@@ -491,9 +495,92 @@ static void D_Display(void)
 tic_t rendergametic;
 boolean supdate;
 
+#ifdef __EMSCRIPTEN__
+static void one_loop()
+{
+	static tic_t oldentertics = 0, entertic = 0, realtics = 0, rendertimeout = INFTICS;
+
+	if (lastwipetic)
+	{
+		oldentertics = lastwipetic;
+		lastwipetic = 0;
+	}
+
+	// get real tics
+	entertic = I_GetTime();
+	if (oldentertics == 0)
+		oldentertics = entertic;
+	realtics = entertic - oldentertics;
+	oldentertics = entertic;
+
+#ifdef DEBUGFILE
+	if (!realtics)
+		if (debugload)
+			debugload--;
+#endif
+
+	// wait for time to pass at SRB2's framerate.
+	if (!realtics && !singletics)
+		return;
+
+#ifdef HW3SOUND
+	HW3S_BeginFrameUpdate();
+#endif
+
+	realtics = 1;
+
+	// process tics (but maybe not if realtic == 0)
+	TryRunTics(realtics);
+
+	if (lastdraw || singletics || gametic > rendergametic)
+	{
+		rendergametic = gametic;
+		rendertimeout = entertic+TICRATE/17;
+
+		// Update display, next frame, with current state.
+		D_Display();
+		supdate = false;
+
+		if (moviemode)
+			M_SaveFrame();
+		if (takescreenshot) // Only take screenshots after drawing.
+			M_DoScreenShot();
+	}
+	else if (rendertimeout < entertic) // in case the server hang or netsplit
+	{
+		// Lagless camera! Yay!
+		if (gamestate == GS_LEVEL && netgame)
+		{
+			if (splitscreen && camera2.chase)
+				P_MoveChaseCamera(&players[secondarydisplayplayer], &camera2, false);
+			if (camera.chase)
+				P_MoveChaseCamera(&players[displayplayer], &camera, false);
+		}
+		D_Display();
+
+		if (moviemode)
+			M_SaveFrame();
+		if (takescreenshot) // Only take screenshots after drawing.
+			M_DoScreenShot();
+	}
+
+	// consoleplayer -> displayplayer (hear sounds from viewpoint)
+	S_UpdateSounds(); // move positional sounds
+
+	// check for media change, loop music..
+	I_UpdateCD();
+
+#ifdef HW3SOUND
+	HW3S_EndFrameUpdate();
+#endif
+}
+#endif
+
 void D_SRB2Loop(void)
 {
+#ifndef __EMSCRIPTEN__
 	tic_t oldentertics = 0, entertic = 0, realtics = 0, rendertimeout = INFTICS;
+#endif
 
 	if (dedicated)
 		server = true;
@@ -511,7 +598,9 @@ void D_SRB2Loop(void)
 	I_DoStartupMouse();
 #endif
 
+#ifndef __EMSCRIPTEN__
 	oldentertics = I_GetTime();
+#endif
 
 	// end of loading screen: CONS_Printf() will no more call FinishUpdate()
 	con_startup = false;
@@ -536,6 +625,9 @@ void D_SRB2Loop(void)
 		V_DrawScaledPatch(0, 0, 0, (patch_t *)W_CacheLumpNum(W_GetNumForName("CONSBACK"), PU_CACHE));
 	I_FinishUpdate(); // page flip or blit buffer
 
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(one_loop, 35, 0);
+#else
 	for (;;)
 	{
 		if (lastwipetic)
@@ -615,6 +707,7 @@ void D_SRB2Loop(void)
 		HW3S_EndFrameUpdate();
 #endif
 	}
+#endif
 }
 
 //
@@ -792,11 +885,11 @@ static void IdentifyVersion(void)
 
 	// if you change the ordering of this or add/remove a file, be sure to update the md5
 	// checking in D_SRB2Main
-#ifdef EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 	D_AddFile(va(pandf,srb2waddir,"zones.dta"));
 	D_AddFile(va(pandf,srb2waddir, "player.dta"));
 	D_AddFile(va(pandf,srb2waddir,"patch.dta"));
-	//D_AddFile(va(pandf,srb2waddir,"music.dta"));
+	D_AddFile(va(pandf,srb2waddir,"music.dta"));
 #else
 
 	// Add the maps
@@ -1094,7 +1187,7 @@ void D_SRB2Main(void)
 #endif
 	D_CleanFile();
 
-#ifdef EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 	mainwads = 4; // no rings.dta
 #else
 
@@ -1177,10 +1270,6 @@ void D_SRB2Main(void)
 
 	// setting up sound
 	CONS_Printf("S_Init(): Setting up sound.\n");
-#ifdef EMSCRIPTEN
-	nosound = true;
-	nomidimusic = nodigimusic = true;
-#else
 	if (M_CheckParm("-nosound"))
 		nosound = true;
 	if (M_CheckParm("-nomusic")) // combines -nomidimusic and -nodigmusic
@@ -1192,7 +1281,6 @@ void D_SRB2Main(void)
 		if (M_CheckParm("-nodigmusic"))
 			nodigimusic = true; // WARNING: DOS version initmusic in I_StartupSound
 	}
-#endif
 	I_StartupSound();
 	I_InitMusic();
 	S_Init(cv_soundvolume.value, cv_digmusicvolume.value, cv_midimusicvolume.value);
