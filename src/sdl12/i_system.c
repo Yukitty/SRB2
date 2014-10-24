@@ -139,6 +139,10 @@ void __set_fpscr(long); // in libgcc / kernel's startup.s?
 #endif
 #endif // NOMUMBLE
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #ifdef _WIN32_WCE
 #include "SRB2CE/cehelp.h"
 #endif
@@ -2292,6 +2296,16 @@ void I_Quit(void)
 	if (metalrecording)
 		G_StopMetalRecording();
 
+#ifdef __EMSCRIPTEN__
+	// JavaScripts can't really "shut down", but they can disconnect, stop playing sounds and throw an exception.
+	D_QuitNetGame();
+	I_ShutdownMusic();
+	I_ShutdownSound();
+	death:
+		EM_ASM(throw 'exit');
+		exit(0); // to appease compiler.
+#else
+
 	D_QuitNetGame();
 	I_ShutdownMusic();
 	I_ShutdownSound();
@@ -2300,7 +2314,6 @@ void I_Quit(void)
 	I_ShutdownGraphics();
 	I_ShutdownInput();
 	I_ShutdownSystem();
-#ifndef __EMSCRIPTEN__
 #ifndef _arch_dreamcast
 	SDL_Quit();
 #endif
@@ -2310,7 +2323,6 @@ void I_Quit(void)
 		printf("\r");
 		ShowEndTxt();
 	}
-#endif
 death:
 	W_Shutdown();
 #ifdef GP2X
@@ -2318,6 +2330,7 @@ death:
 	execl("/usr/gp2x/gp2xmenu", "/usr/gp2x/gp2xmenu", NULL);
 #endif
 	exit(0);
+#endif
 }
 
 void I_WaitVBL(INT32 count)
@@ -2429,15 +2442,9 @@ void I_Error(const char *error, ...)
 	va_start(argptr,error);
 	if (!framebuffer)
 	{
-#ifdef __EMSCRIPTEN__
-		printf("Error: ");
-		vprintf(error,argptr);
-		printf("\n");
-#else
 		fprintf(stderr, "Error: ");
 		vfprintf(stderr,error,argptr);
 		fprintf(stderr, "\n");
-#endif
 	}
 	va_end(argptr);
 
@@ -2459,6 +2466,9 @@ void I_Error(const char *error, ...)
 	D_QuitNetGame();
 	I_ShutdownMusic();
 	I_ShutdownSound();
+#ifdef __EMSCRIPTEN__
+	EM_ASM(throw 'I_Error');
+#endif
 	I_ShutdownCD();
 	// use this for 1.28 19990220 by Kin
 	I_ShutdownGraphics();

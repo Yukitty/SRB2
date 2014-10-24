@@ -122,7 +122,9 @@ static void Command_Version_f(void);
 static void Command_ModDetails_f(void);
 #endif
 static void Command_ShowGametype_f(void);
+#ifndef __EMSCRIPTEN__
 FUNCNORETURN static ATTRNORETURN void Command_Quit_f(void);
+#endif
 static void Command_Playintro_f(void);
 
 static void Command_Displayplayer_f(void);
@@ -444,7 +446,9 @@ void D_RegisterServerCommands(void)
 #ifdef UPDATE_ALERT
 	COM_AddCommand("mod_details", Command_ModDetails_f);
 #endif
+#ifndef __EMSCRIPTEN__
 	COM_AddCommand("quit", Command_Quit_f);
+#endif
 
 	COM_AddCommand("saveconfig", Command_SaveConfig_f);
 	COM_AddCommand("loadconfig", Command_LoadConfig_f);
@@ -3224,12 +3228,14 @@ static void Command_Playintro_f(void)
 	F_StartIntro();
 }
 
+#ifndef __EMSCRIPTEN__
 /** Quits the game immediately.
   */
 FUNCNORETURN static ATTRNORETURN void Command_Quit_f(void)
 {
 	I_Quit();
 }
+#endif
 
 void ItemFinder_OnChange(void)
 {

@@ -626,7 +626,7 @@ void D_SRB2Loop(void)
 	I_FinishUpdate(); // page flip or blit buffer
 
 #ifdef __EMSCRIPTEN__
-	emscripten_set_main_loop(one_loop, 35, 0);
+	emscripten_set_main_loop(one_loop, 0, 0);
 #else
 	for (;;)
 	{
@@ -822,6 +822,15 @@ static inline void D_CleanFile(void)
 
 static void IdentifyVersion(void)
 {
+#ifdef __EMSCRIPTEN__
+	D_AddFile("srb2.zwad");
+	D_AddFile("zones.zwad");
+	D_AddFile("player.zwad");
+	D_AddFile("rings.zwad");
+	D_AddFile("patch.zwad");
+	D_AddFile("music.dta");
+#else
+
 	char *srb2wad1, *srb2wad2;
 	const char *srb2waddir = NULL;
 
@@ -885,12 +894,6 @@ static void IdentifyVersion(void)
 
 	// if you change the ordering of this or add/remove a file, be sure to update the md5
 	// checking in D_SRB2Main
-#ifdef __EMSCRIPTEN__
-	D_AddFile(va(pandf,srb2waddir,"zones.dta"));
-	D_AddFile(va(pandf,srb2waddir, "player.dta"));
-	D_AddFile(va(pandf,srb2waddir,"patch.dta"));
-	D_AddFile(va(pandf,srb2waddir,"music.dta"));
-#else
 
 	// Add the maps
 	D_AddFile(va(pandf,srb2waddir,"zones.dta"));

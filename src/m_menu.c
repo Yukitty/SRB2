@@ -452,7 +452,9 @@ static menuitem_t MainMenu[] =
 	{IT_CALL   |IT_STRING, NULL, "1  player",   M_SinglePlayerMenu, 92},
 	{IT_SUBMENU|IT_STRING, NULL, "multiplayer", &MP_MainDef,       100},
 	{IT_CALL   |IT_STRING, NULL, "options",     M_Options,         108},
+#ifndef __EMSCRIPTEN__
 	{IT_CALL   |IT_STRING, NULL, "quit  game",  M_QuitSRB2,        116},
+#endif
 };
 
 typedef enum
@@ -500,7 +502,9 @@ static menuitem_t MPauseMenu[] =
 	{IT_CALL | IT_STRING,    NULL, "Options",              M_Options,             64},
 
 	{IT_CALL | IT_STRING,    NULL, "Return to Title",      M_EndGame,            80},
+#ifndef __EMSCRIPTEN__
 	{IT_CALL | IT_STRING,    NULL, "Quit Game",            M_QuitSRB2,           88},
+#endif
 };
 
 typedef enum
@@ -536,7 +540,9 @@ static menuitem_t SPauseMenu[] =
 	{IT_CALL | IT_STRING,    NULL, "Options",              M_Options,             64},
 
 	{IT_CALL | IT_STRING,    NULL, "Return to Title",      M_EndGame,             80},
+#ifndef __EMSCRIPTEN__
 	{IT_CALL | IT_STRING,    NULL, "Quit Game",            M_QuitSRB2,            88},
+#endif
 };
 
 typedef enum

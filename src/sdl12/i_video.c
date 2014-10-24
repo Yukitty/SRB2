@@ -29,11 +29,11 @@
 
 #ifdef HAVE_SDL
 
-#ifdef __EMSCRIPTEN__
-#include <SDL/SDL.h>
-#include <emscripten.h>
-#else
 #include "SDL.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <html5.h>
 #endif
 
 #ifdef _MSC_VER
@@ -553,16 +553,20 @@ static INT32 SDLatekey(SDLKey sym)
 
 static void SDLdoUngrabMouse(void)
 {
+#ifndef __EMSCRIPTEN__
 	if (SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
 	{
 		SDL_WM_GrabInput(SDL_GRAB_OFF);
 	}
+#endif
 }
 
 void SDLforceUngrabMouse(void)
 {
+#ifndef __EMSCRIPTEN__
 	if (SDL_WasInit(SDL_INIT_VIDEO)==SDL_INIT_VIDEO)
 		SDL_WM_GrabInput(SDL_GRAB_OFF);
+#endif
 }
 
 static void VID_Command_NumModes_f (void)
@@ -1036,6 +1040,9 @@ void I_GetEvent(void)
 	memset(&inputEvent, 0x00, sizeof(inputEvent));
 	while (SDL_PollEvent(&inputEvent))
 	{
+#ifdef __EMSCRIPTEN__
+		emscripten_request_pointerlock("#window",true);
+#endif
 		memset(&event,0x00,sizeof (event_t));
 		switch (inputEvent.type)
 		{
@@ -1108,6 +1115,7 @@ void I_GetEvent(void)
 					}
 					event.type = ev_mouse;
 					D_PostEvent(&event);
+#ifndef __EMSCRIPTEN__
 					// Warp the pointer back to the middle of the window
 					//  or we cannot move any further if it's at a border.
 					if ((inputEvent.motion.x < (realwidth/2 )-(realwidth/4 )) ||
@@ -1118,6 +1126,7 @@ void I_GetEvent(void)
 						//if (SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY) || !mousegrabok)
 							HalfWarpMouse(realwidth, realheight);
 					}
+#endif
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
@@ -1251,6 +1260,7 @@ void I_GetEvent(void)
 
 void I_StartupMouse(void)
 {
+#ifndef __EMSCRIPTEN__
 	static SDL_bool firsttimeonmouse = SDL_TRUE;
 
 	if (disable_mouse)
@@ -1264,6 +1274,7 @@ void I_StartupMouse(void)
 		return;
 	else
 		SDLdoUngrabMouse();
+#endif
 }
 
 //
@@ -2094,8 +2105,10 @@ void I_StartupGraphics(void)
 	realheight = (Uint16)vid.height;
 
 	VID_Command_Info_f();
+#ifndef __EMSCRIPTEN__
 	if (!disable_mouse) SDL_ShowCursor(SDL_DISABLE);
 	SDLdoUngrabMouse();
+#endif
 
 	SDLWMSet();
 

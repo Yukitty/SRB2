@@ -488,9 +488,12 @@ void I_ShutdownDigMusic(void)
 		gme = NULL;
 	}
 #endif
+#ifdef __EMSCRIPTEN__
+	Mix_VolumeMusic(0);
+#endif
+	Mix_HookMusicFinished(NULL);
 	if (!music)
 		return;
-	Mix_HookMusicFinished(NULL);
 	Mix_FreeMusic(music);
 	music = NULL;
 }
