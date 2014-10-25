@@ -524,7 +524,7 @@ static void music_error(const char *musicname)
 boolean I_StartDigSong(const char *musicname, boolean looping)
 {
 	FILE *f;
-	char filename[512];
+	char filename[64];
 
 	sprintf(filename,"music/O_%s.ogg",musicname);
 
