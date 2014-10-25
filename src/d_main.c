@@ -132,14 +132,14 @@ INT32 debugload = 0;
 #endif
 
 #ifdef __EMSCRIPTEN__
-char srb2home[256] = "/save";
-char srb2path[256] = ".";
+char srb2home[64] = "/save";
+char srb2path[64] = ".";
 #elif defined(_arch_dreamcast)
-char srb2home[256] = "/cd";
-char srb2path[256] = "/cd";
+char srb2home[64] = "/cd";
+char srb2path[64] = "/cd";
 #else
-char srb2home[256] = ".";
-char srb2path[256] = ".";
+char srb2home[64] = ".";
+char srb2path[64] = ".";
 #endif
 boolean usehome = true;
 const char *pandf = "%s" PATHSEP "%s";
