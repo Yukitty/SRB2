@@ -243,7 +243,7 @@ boolean FIL_WriteFile(char const *name, const void *source, size_t length)
 	fclose(handle);
 
 #ifdef __EMSCRIPTEN__
-	EM_ASM(FS.syncfs(false));
+	EM_ASM(FS.syncfs(function(err){}));
 #endif
 
 	if (count < length)
@@ -546,6 +546,10 @@ void M_SaveConfig(const char *filename)
 	if (!dedicated) G_SaveKeySetting(f);
 
 	fclose(f);
+
+#ifdef __EMSCRIPTEN__
+	EM_ASM(FS.syncfs(function(err){}));
+#endif
 }
 
 

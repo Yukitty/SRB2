@@ -51,7 +51,9 @@ void D_PostEvent_end(void);    // delimiter for locking memory
 
 void D_ProcessEvents(void);
 
+#ifndef __EMSCRIPTEN__
 const char *D_Home(void);
+#endif
 
 //
 // BASE LEVEL

@@ -131,7 +131,10 @@ boolean advancedemo;
 INT32 debugload = 0;
 #endif
 
-#ifdef _arch_dreamcast
+#ifdef __EMSCRIPTEN__
+char srb2home[256] = "/save";
+char srb2path[256] = ".";
+#elif defined(_arch_dreamcast)
 char srb2home[256] = "/cd";
 char srb2path[256] = "/cd";
 #else
@@ -975,7 +978,7 @@ static inline void D_MakeTitleString(char *s)
 
 
 #ifdef __EMSCRIPTEN__
-void FS_Mounted(void)
+void EMSCRIPTEN_KEEPALIVE FS_Mounted(void)
 {
 	M_FirstLoadConfig();
 	G_LoadGameData();
@@ -1001,7 +1004,7 @@ void D_SRB2Main(void)
 		FS.mkdir('/save');
 		FS.mount(IDBFS, {}, '/save');
 		FS.syncfs(true, function() {
-			ccall('FS_Mounted', 'v')
+			ccall('FS_Mounted', null);
 		});
 	);
 #endif
@@ -1063,6 +1066,10 @@ void D_SRB2Main(void)
 	if (devparm)
 		CONS_Printf(M_GetText("Development mode ON.\n"));
 
+#ifdef __EMSCRIPTEN__
+	sprintf(savegamename, "%s"PATHSEP SAVEGAMENAME"%%u.ssg", srb2home);
+	sprintf(configfile, "%s"PATHSEP CONFIGFILENAME, srb2home);
+#else
 	// default savegame
 	strcpy(savegamename, SAVEGAMENAME"%u.ssg");
 
@@ -1119,6 +1126,7 @@ void D_SRB2Main(void)
 	strcpy(downloaddir, "/ram"); // the dreamcast's TMP
 #endif
 	}
+#endif
 
 	// rand() needs seeded regardless of password
 	srand((unsigned int)time(NULL));
@@ -1460,6 +1468,7 @@ void D_SRB2Main(void)
 	}
 }
 
+#ifndef __EMSCRIPTEN__
 const char *D_Home(void)
 {
 	const char *userhome = NULL;
@@ -1513,3 +1522,4 @@ const char *D_Home(void)
 	if (usehome) return userhome;
 	else return NULL;
 }
+#endif

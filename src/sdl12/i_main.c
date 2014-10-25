@@ -146,7 +146,9 @@ int SDL_main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
+#ifdef LOGMESSAGES
 	const char *logdir = NULL;
+#endif
 	myargc = argc;
 	myargv = argv; /// \todo pull out path to exe from this string
 #endif
@@ -191,9 +193,9 @@ int main(int argc, char **argv)
 		I_PutEnv(va("HOME=%ssrb2wii", wiicwd));
 #endif
 
+#ifdef LOGMESSAGES
 	logdir = D_Home();
 
-#ifdef LOGMESSAGES
 #if defined(_WIN32_WCE) || defined(GP2X)
 	logstream = fopen(va("%s.log",argv[0]), "a");
 #elif defined (_WII)

@@ -60,11 +60,7 @@ JoyType_t Joystick2;
 // 1024 bytes is plenty for a savegame
 #define SAVEGAMESIZE (1024)
 
-#ifdef __EMSCRIPTEN
-char gamedatafilename[64] = "/save/gamedata.dat";
-#else
 char gamedatafilename[64] = "gamedata.dat";
-#endif
 char timeattackfolder[64] = "main";
 char customversionstring[32] = "\0";
 

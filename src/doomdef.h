@@ -130,7 +130,7 @@
 //#define PARANOIA // do some tests that never fail but maybe
 // turn this on by make etc.. DEBUGMODE = 1 or use the Debug profile in the VC++ projects
 //#endif
-#if defined (_WIN32) || (defined (__unix__) && !defined (MSDOS)) || defined(__APPLE__) || defined (UNIXCOMMON) || defined (macintosh)
+#if !defined (__EMSCRIPTEN__) && (defined (_WIN32) || (defined (__unix__) && !defined (MSDOS)) || defined(__APPLE__) || defined (UNIXCOMMON) || defined (macintosh))
 #define LOGMESSAGES // write message in log.txt
 #endif
 
@@ -348,11 +348,7 @@ void CONS_Debug(INT32 debugflags, const char *fmt, ...) FUNCDEBUG;
 #define DEVMAPS "devmaps"
 #define DEVDATA "devdata"
 
-#ifdef __EMSCRIPTEN__
-#define SAVEGAMENAME "/save/srb2sav"
-#else
 #define SAVEGAMENAME "srb2sav"
-#endif
 
 char savegamename[256];
 
