@@ -526,7 +526,7 @@ boolean I_StartDigSong(const char *musicname, boolean looping)
 	FILE *f;
 	char filename[64];
 
-	sprintf(filename,"music/O_%s.ogg",musicname);
+	sprintf(filename,"music/%s.ogg",musicname);
 
 	Mix_HaltMusic();
 	shouldLoop = looping;
