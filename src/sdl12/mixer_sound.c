@@ -62,12 +62,18 @@
 #endif
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 UINT8 sound_started = false;
 
 static boolean midimode;
 static Mix_Music *music;
 static UINT8 music_volume, midi_volume, sfx_volume;
+#ifndef __EMSCRIPTEN__
 static double loop_point;
+#endif
 
 #ifdef HAVE_LIBGME
 static Music_Emu *gme;
@@ -420,14 +426,14 @@ void I_SetSfxVolume(UINT8 volume)
 // Music
 //
 
+#ifndef __EMSCRIPTEN__
 // Music hooks
 static void music_loop(void)
 {
 	Mix_PlayMusic(music, 0);
-#ifndef __EMSCRIPTEN__ // FUCK
 	Mix_SetMusicPosition(loop_point);
-#endif
 }
+#endif
 
 #ifdef HAVE_LIBGME
 static void mix_gme(void *udata, Uint8 *stream, int len)
@@ -503,8 +509,40 @@ void I_ShutdownDigMusic(void)
 	music = NULL;
 }
 
+#ifdef __EMSCRIPTEN__
+static void music_load(const char*);
+static void music_error(const char*);
+static boolean shouldLoop;
+#endif
 boolean I_StartDigSong(const char *musicname, boolean looping)
 {
+#ifdef __EMSCRIPTEN__
+	FILE *f;
+	char filename[512], loadedname[512];
+	sprintf(filename,"music/O_%s.ogg",musicname);
+	sprintf(loadedname,"O_%s.ogg",musicname);
+	shouldLoop = looping;
+	f = fopen(loadedname,"rb");
+	if (!f)
+		emscripten_async_wget(filename,loadedname,music_load,music_error);
+	else {
+		fclose(f);
+		music_load(loadedname);
+	}
+	return true;
+}
+void music_error(const char *musicname)
+{
+	CONS_Alert(CONS_ERROR, "Failed to load music %s\n", musicname);
+}
+void music_load(const char *musicname)
+{
+	music = Mix_LoadMUS(musicname);
+	Mix_HaltMusic();
+	Mix_VolumeMusic((UINT32)music_volume*128/31);
+	Mix_PlayMusic(music, shouldLoop ? -1 : 0);
+}
+#else // __EMSCRIPTEN__
 	char *data;
 	size_t len;
 	lumpnum_t lumpnum = W_CheckNumForName(va("O_%s",musicname));
@@ -681,6 +719,7 @@ boolean I_StartDigSong(const char *musicname, boolean looping)
 		Mix_HookMusicFinished(music_loop);
 	return true;
 }
+#endif // __EMSCRIPTEN__
 
 void I_StopDigSong(void)
 {

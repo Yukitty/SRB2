@@ -2303,8 +2303,8 @@ void I_Quit(void)
 	I_ShutdownMusic();
 	I_ShutdownSound();
 	death:
-		EM_ASM(throw 'exit');
-		exit(0); // to appease compiler.
+		emscripten_force_exit(0);
+		exit(0); // appease compiler
 #else
 
 	D_QuitNetGame();

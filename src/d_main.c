@@ -828,7 +828,6 @@ static void IdentifyVersion(void)
 	D_AddFile("player.zwad");
 	D_AddFile("rings.zwad");
 	D_AddFile("patch.zwad");
-	D_AddFile("music.dta");
 #else
 
 	char *srb2wad1, *srb2wad2;
@@ -1190,10 +1189,6 @@ void D_SRB2Main(void)
 #endif
 	D_CleanFile();
 
-#ifdef __EMSCRIPTEN__
-	mainwads = 4; // no rings.dta
-#else
-
 #if 1 // md5s last updated 8/05/14
 
 	// Check MD5s of autoloaded files
@@ -1207,7 +1202,6 @@ void D_SRB2Main(void)
 #endif
 
 	mainwads = 5; // there are 5 wads not to unload
-#endif
 
 	cht_Init();
 
