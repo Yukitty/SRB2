@@ -335,6 +335,7 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="--preload-file bin/Resources/webdata@/" />
 					<Add option="-s ASSERTIONS=2" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
+					<Add option="--pre-js pre.js" />
 				</Linker>
 			</Target>
 			<Target title="Release Emscripten/SDL">
@@ -357,6 +358,7 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="--preload-file bin/Resources/webdata@/" />
 					<Add option="-O2" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
+					<Add option="--pre-js pre.js" />
 				</Linker>
 			</Target>
 			<Target title="Debug Any/Dummy">
@@ -929,6 +931,10 @@ HW3SOUND for 3D hardware sound  support
 		<Unit filename="comptime.mk" />
 		<Unit filename="comptime.sh" />
 		<Unit filename="cpdebug.mk" />
+		<Unit filename="pre.js">
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
 		<Unit filename="src/am_map.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug Native/SDL" />
