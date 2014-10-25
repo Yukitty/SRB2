@@ -789,15 +789,15 @@ void I_OutputMsg(const char *fmt, ...)
 	DEFAULTFONTBGR, DEFAULTFONTBGG, DEFAULTFONTBGB, DEFAULTFONTBGA, txt);
 #endif
 
-#ifdef __EMSCRIPTEN__
-	printf("%s",txt);
-#endif
-
 #if defined (_WIN32) && !defined (_XBOX) && defined (_MSC_VER)
 	OutputDebugStringA(txt);
 #endif
 
 	len = strlen(txt);
+
+#ifdef __EMSCRIPTEN__
+	printf("%s",txt);
+#else
 
 #ifdef LOGMESSAGES
 	if (logstream)
@@ -892,6 +892,7 @@ void I_OutputMsg(const char *fmt, ...)
 		fflush(stderr);
 
 #endif
+#endif // __EMSCRIPTEN__
 }
 
 //
