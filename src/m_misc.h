@@ -33,7 +33,9 @@ void M_SaveFrame(void);
 void M_StopMovie(void);
 
 // the file where game vars and settings are saved
-#ifdef DC
+#ifdef __EMSCRIPTEN__
+#define CONFIGFILENAME "/save/config.cfg"
+#elif defined (DC)
 #define CONFIGFILENAME "srb2dc.cfg"
 #elif defined (PSP)
 #define CONFIGFILENAME "srb2psp.cfg"

@@ -47,6 +47,10 @@
 #include "hardware/hw_main.h"
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #ifdef HAVE_SDL
 #include "sdl/hwsym_sdl.h"
 #ifdef __linux__
@@ -237,6 +241,10 @@ boolean FIL_WriteFile(char const *name, const void *source, size_t length)
 
 	count = fwrite(source, 1, length, handle);
 	fclose(handle);
+
+#ifdef __EMSCRIPTEN__
+	EM_ASM(FS.syncfs(false));
+#endif
 
 	if (count < length)
 		return false;

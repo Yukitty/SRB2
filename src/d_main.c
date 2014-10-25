@@ -974,6 +974,14 @@ static inline void D_MakeTitleString(char *s)
 }
 
 
+#ifdef __EMSCRIPTEN__
+void FS_Mounted(void)
+{
+	M_FirstLoadConfig();
+	G_LoadGameData();
+}
+#endif
+
 //
 // D_SRB2Main
 //
@@ -992,6 +1000,9 @@ void D_SRB2Main(void)
 		FS.mkdir('/music');
 		FS.mkdir('/save');
 		FS.mount(IDBFS, {}, '/save');
+		FS.syncfs(true, function() {
+			ccall('FS_Mounted', 'v')
+		});
 	);
 #endif
 
@@ -1243,10 +1254,12 @@ void D_SRB2Main(void)
 
 	I_RegisterSysCommands();
 
+#ifndef __EMSCRIPTEN__
 	//--------------------------------------------------------- CONFIG.CFG
 	M_FirstLoadConfig(); // WARNING : this do a "COM_BufExecute()"
 
 	G_LoadGameData();
+#endif
 
 #if (defined (__unix__) && !defined (MSDOS)) || defined (UNIXCOMMON) || defined (HAVE_SDL)
 	VID_PrepareModeList(); // Regenerate Modelist according to cv_fullscreen
