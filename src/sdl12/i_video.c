@@ -1040,9 +1040,6 @@ void I_GetEvent(void)
 	memset(&inputEvent, 0x00, sizeof(inputEvent));
 	while (SDL_PollEvent(&inputEvent))
 	{
-#ifdef __EMSCRIPTEN__
-		emscripten_request_pointerlock("#window",true);
-#endif
 		memset(&event,0x00,sizeof (event_t));
 		switch (inputEvent.type)
 		{
