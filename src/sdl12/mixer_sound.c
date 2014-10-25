@@ -510,39 +510,38 @@ void I_ShutdownDigMusic(void)
 }
 
 #ifdef __EMSCRIPTEN__
-static void music_load(const char*);
-static void music_error(const char*);
 static boolean shouldLoop;
-#endif
-boolean I_StartDigSong(const char *musicname, boolean looping)
-{
-#ifdef __EMSCRIPTEN__
-	FILE *f;
-	char filename[512], loadedname[512];
-	sprintf(filename,"music/O_%s.ogg",musicname);
-	sprintf(loadedname,"O_%s.ogg",musicname);
-	shouldLoop = looping;
-	f = fopen(loadedname,"rb");
-	if (!f)
-		emscripten_async_wget(filename,loadedname,music_load,music_error);
-	else {
-		fclose(f);
-		music_load(loadedname);
-	}
-	return true;
-}
-void music_error(const char *musicname)
-{
-	CONS_Alert(CONS_ERROR, "Failed to load music %s\n", musicname);
-}
-void music_load(const char *musicname)
+static void music_load(const char *musicname)
 {
 	music = Mix_LoadMUS(musicname);
-	Mix_HaltMusic();
 	Mix_VolumeMusic((UINT32)music_volume*128/31);
 	Mix_PlayMusic(music, shouldLoop ? -1 : 0);
 }
+static void music_error(const char *musicname)
+{
+	CONS_Alert(CONS_ERROR, "Failed to load music '%s' (404?)\n", musicname);
+}
+boolean I_StartDigSong(const char *musicname, boolean looping)
+{
+	FILE *f;
+	char filename[512];
+
+	sprintf(filename,"music/O_%s.ogg",musicname);
+
+	Mix_HaltMusic();
+	shouldLoop = looping;
+	f = fopen(filename,"rb");
+	if (!f)
+		emscripten_async_wget(filename,filename,music_load,music_error);
+	else {
+		fclose(f);
+		music_load(filename);
+	}
+	return true;
+}
 #else // __EMSCRIPTEN__
+boolean I_StartDigSong(const char *musicname, boolean looping)
+{
 	char *data;
 	size_t len;
 	lumpnum_t lumpnum = W_CheckNumForName(va("O_%s",musicname));
