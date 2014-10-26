@@ -52,6 +52,11 @@
 #include "hardware/hw_glob.h"
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include "d_main.h"
+#endif
+
 #ifdef PC_DOS
 #include <stdio.h> // for snprintf
 int	snprintf(char *str, size_t n, const char *fmt, ...);
@@ -225,6 +230,39 @@ static void W_InvalidateLumpnumCache(void)
 	memset(lumpnumcache, 0, sizeof (lumpnumcache));
 }
 
+#ifdef __EMSCRIPTEN__
+static UINT16 loading_count = 0;
+
+static void wad_failed(const char *file)
+{
+	loading_count = -1;
+	I_Error("Failed to load wad file %s", file);
+}
+
+static void load_wrapper(const char *file)
+{
+	UINT16 lumps = W_LoadWadFile(file);
+	if (lumps == INT16_MAX)
+		return wad_failed(file);
+	if (--loading_count == 0)
+		D_SRB2Main2();
+}
+
+void W_AsyncLoadWad(const char *filename)
+{
+	char path[64];
+	FILE *f;
+	sprintf(path,"wad/%s",filename);
+	if ((f = fopen(filename,"rb")) == NULL) {
+		loading_count++;
+		emscripten_async_wget(path,path,load_wrapper,wad_failed);
+	}
+	else {
+		fclose(f);
+		W_LoadWadFile(filename);
+	}
+}
+#endif
 
 //  Allocate a wadfile, setup the lumpinfo (directory) and
 //  lumpcache, add the wadfile to the current active wadfiles
@@ -526,8 +564,12 @@ INT32 W_InitMultipleFiles(char **filenames)
 	// will be realloced as lumps are added
 	for (; *filenames; filenames++)
 	{
+#ifdef __EMSCRIPTEN__
+		W_AsyncLoadWad(*filenames);
+#else
 		//CONS_Debug(DBG_SETUP, "Loading %s\n", *filenames);
 		rc &= (W_LoadWadFile(*filenames) != INT16_MAX) ? 1 : 0;
+#endif
 	}
 
 	if (!numwadfiles)

@@ -230,9 +230,6 @@ int main(int argc, char **argv)
 	// startup SRB2
 	CONS_Printf("%s", M_GetText("Setting up SRB2...\n"));
 	D_SRB2Main();
-	CONS_Printf("%s", M_GetText("Entering main game loop...\n"));
-	// never return
-	D_SRB2Loop();
 
 #ifdef BUGTRAP
 	// This is safe even if BT didn't start.

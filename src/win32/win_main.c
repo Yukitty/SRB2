@@ -627,9 +627,6 @@ static int WINAPI HandledWinMain(HINSTANCE hInstance)
 	// startup SRB2
 	CONS_Printf("Setting up SRB2...\n");
 	D_SRB2Main();
-	CONS_Printf("Entering main game loop...\n");
-	// never return
-	D_SRB2Loop();
 
 	// back to Windoze
 	return 0;

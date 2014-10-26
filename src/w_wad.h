@@ -86,6 +86,9 @@ extern wadfile_t *wadfiles[MAX_WADFILES];
 
 void W_Shutdown(void);
 
+#ifdef __EMSCRIPTEN__
+void W_AsyncLoadWad(const char *filename);
+#endif
 // Load and add a wadfile to the active wad files, returns numbers of lumps, INT16_MAX on error
 UINT16 W_LoadWadFile(const char *filename);
 #ifdef DELFILE

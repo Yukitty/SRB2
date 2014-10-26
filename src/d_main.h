@@ -42,6 +42,9 @@ FUNCNORETURN
 // If not overrided by user input, calls N_AdvanceDemo.
 //
 void D_SRB2Main(void);
+#ifdef __EMSCRIPTEN__
+void D_SRB2Main2(void);
+#endif
 
 // Called by IO functions when input is detected.
 void D_PostEvent(const event_t *ev);

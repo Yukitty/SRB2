@@ -826,11 +826,11 @@ static inline void D_CleanFile(void)
 static void IdentifyVersion(void)
 {
 #ifdef __EMSCRIPTEN__
-	D_AddFile("srb2.zwad");
-	D_AddFile("zones.zwad");
-	D_AddFile("player.zwad");
-	D_AddFile("rings.zwad");
-	D_AddFile("patch.zwad");
+	D_AddFile("preload.wad");
+	D_AddFile("srb2.wad");
+	D_AddFile("zones.wad");
+	D_AddFile("player.wad");
+	D_AddFile("rings.wad");
 #else
 
 	char *srb2wad1, *srb2wad2;
@@ -990,17 +990,18 @@ void EMSCRIPTEN_KEEPALIVE FS_Mounted(void)
 //
 void D_SRB2Main(void)
 {
-	INT32 p;
 	char srb2[82]; // srb2 title banner
 	char title[82];
 
+#ifndef __EMSCRIPTEN__
+	INT32 p;
 	INT32 pstartmap = 1;
 	boolean autostart = false;
-
-#ifdef __EMSCRIPTEN__
+#else
 	// Script environment init.
 	EM_ASM(
 		FS.mkdir('/music');
+		FS.mkdir('/wad');
 		FS.mkdir('/save');
 		FS.mount(IDBFS, {}, '/save');
 		FS.syncfs(true, function() {
@@ -1165,30 +1166,6 @@ void D_SRB2Main(void)
 		}
 	}
 
-	// get map from parms
-
-	if (M_CheckParm("-server") || dedicated)
-		netgame = server = true;
-
-	if (M_CheckParm("-warp") && M_IsNextParm())
-	{
-		const char *word = M_GetNextParm();
-		if (fastncmp(word, "MAP", 3))
-			pstartmap = M_MapNumber(word[3], word[4]);
-		else
-			pstartmap = atoi(word);
-		// Don't check if lump exists just yet because the wads haven't been loaded!
-		// Just do a basic range check here.
-		if (pstartmap < 1 || pstartmap > NUMMAPS)
-			I_Error("Cannot warp to map %d (out of range)\n", pstartmap);
-		else
-		{
-			if (!M_CheckParm("-server"))
-				G_SetGameModified(true);
-			autostart = true;
-		}
-	}
-
 	CONS_Printf("Z_Init(): Init zone memory allocation daemon. \n");
 	Z_Init();
 
@@ -1216,6 +1193,16 @@ void D_SRB2Main(void)
 		I_Error("A WAD file was not found or not valid.\nCheck the log to see which ones.\n");
 #endif
 	D_CleanFile();
+
+#ifdef __EMSCRIPTEN__
+	emscripten_exit_with_live_runtime();
+}
+void D_SRB2Main2(void)
+{
+	INT32 p;
+	INT32 pstartmap = 1;
+	boolean autostart = false;
+#endif
 
 #if 1 // md5s last updated 8/05/14
 
@@ -1314,6 +1301,30 @@ void D_SRB2Main(void)
 
 	CONS_Printf("ST_Init(): Init status bar.\n");
 	ST_Init();
+
+	// get map from parms
+
+	if (M_CheckParm("-server") || dedicated)
+		netgame = server = true;
+
+	if (M_CheckParm("-warp") && M_IsNextParm())
+	{
+		const char *word = M_GetNextParm();
+		if (fastncmp(word, "MAP", 3))
+			pstartmap = M_MapNumber(word[3], word[4]);
+		else
+			pstartmap = atoi(word);
+		// Don't check if lump exists just yet because the wads haven't been loaded!
+		// Just do a basic range check here.
+		if (pstartmap < 1 || pstartmap > NUMMAPS)
+			I_Error("Cannot warp to map %d (out of range)\n", pstartmap);
+		else
+		{
+			if (!M_CheckParm("-server"))
+				G_SetGameModified(true);
+			autostart = true;
+		}
+	}
 
 	if (M_CheckParm("-room"))
 	{
@@ -1466,6 +1477,10 @@ void D_SRB2Main(void)
 		if (!P_SetupLevel(false))
 			I_Quit(); // fail so reset game stuff
 	}
+
+	CONS_Printf("%s", M_GetText("Entering main game loop...\n"));
+	// never return
+	D_SRB2Loop();
 }
 
 #ifndef __EMSCRIPTEN__
