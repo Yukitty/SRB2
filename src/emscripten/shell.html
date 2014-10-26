@@ -69,7 +69,7 @@
 				print: function(text) {
 					text = Array.prototype.slice.call(arguments).join(' ');
 					console.log(text);
-		},
+				},
 				printErr: function(text) {
 					text = Array.prototype.slice.call(arguments).join(' ');
 					console.error(text);
@@ -118,6 +118,10 @@
 					if (text) Module.printErr('[post-exception status] ' + text);
 				};
 			};
+			if (location.hash) {
+				Module.arguments = location.hash.slice(1).match(/(\S+)/g)
+				Module.arguments.unshift('srb2web')
+			}
 		</script>
 		{{{ SCRIPT }}}
 	</body>
