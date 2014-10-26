@@ -112,10 +112,32 @@
 					if (text) Module.printErr('[post-exception status] ' + text);
 				};
 			};
-			if (location.hash) {
-				Module.arguments = location.hash.slice(1).match(/(\S+)/g)
-				Module.arguments.unshift('srb2web')
-			}
+			if (location.hash)
+				// Process hash tag arguments to command line list.
+				(function() {
+					var re = /(\S+)(\s*)/g
+					var cb = /^"(.+)"/
+					var hash = location.hash.substr(1)
+					var find
+					var combo
+					Module.arguments = []
+					while ((find = re.exec(hash)) !== null) {
+						if (combo) {
+							combo += find[0]
+							if (combo.trim().substr(-1) != '"')
+								continue
+							Module.arguments.push(combo.trim().slice(1,-1))
+							combo = null
+							continue
+						}
+						else if (find[1].substr(0,1) == '"') {
+							combo = find[0]
+							continue
+						}
+						Module.arguments.push(find[1])
+					}
+					Module.arguments.unshift('srb2web')
+				})()
 		</script>
 		{{{ SCRIPT }}}
 	</body>
