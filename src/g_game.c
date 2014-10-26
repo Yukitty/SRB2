@@ -2973,6 +2973,12 @@ void G_LoadGameData(void)
 	// Version check
 	if (READUINT32(save_p) != 0xFCAFE211)
 	{
+#ifdef __EMSCRIPTEN__
+		// the user can't access files
+		Z_Free(savebuffer);
+		save_p = NULL;
+		return; // so pretend -resetdata was passed instead.
+#else
 		const char *gdfolder = "the SRB2 folder";
 		if (strcmp(srb2home,"."))
 			gdfolder = srb2home;
@@ -2980,6 +2986,7 @@ void G_LoadGameData(void)
 		Z_Free(savebuffer);
 		save_p = NULL;
 		I_Error("Game data is from another version of SRB2.\nDelete %s(maybe in %s) and try again.", gamedatafilename, gdfolder);
+#endif
 	}
 
 	totalplaytime = READUINT32(save_p);
