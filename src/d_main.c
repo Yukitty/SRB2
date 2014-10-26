@@ -997,18 +997,6 @@ void D_SRB2Main(void)
 	INT32 pstartmap = 1;
 	boolean autostart = false;
 
-#ifdef __EMSCRIPTEN__
-	// Script environment init.
-	EM_ASM(
-		FS.mkdir('/music');
-		FS.mkdir('/save');
-		FS.mount(IDBFS, {}, '/save');
-		FS.syncfs(true, function() {
-			ccall('FS_Mounted', null);
-		});
-	);
-#endif
-
 	// keep error messages until the final flush(stderr)
 #if !defined (PC_DOS) && !defined (_WIN32_WCE) && !defined(NOTERMIOS)
 	if (setvbuf(stderr, NULL, _IOFBF, 1000))
