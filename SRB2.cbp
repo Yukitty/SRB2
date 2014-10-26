@@ -333,9 +333,10 @@ HW3SOUND for 3D hardware sound  support
 				</Compiler>
 				<Linker>
 					<Add option="--preload-file bin/Resources/webdata@/" />
-					<Add option="-s ASSERTIONS=2" />
+					<Add option="--pre-js src/emscripten/pre.js" />
+					<Add option="--shell-file src/emscripten/shell.html" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
-					<Add option="--pre-js pre.js" />
+					<Add option="-s ASSERTIONS=2" />
 				</Linker>
 			</Target>
 			<Target title="Release Emscripten/SDL">
@@ -356,9 +357,11 @@ HW3SOUND for 3D hardware sound  support
 				</Compiler>
 				<Linker>
 					<Add option="--preload-file bin/Resources/webdata@/" />
-					<Add option="-O2" />
+					<Add option="--pre-js src/emscripten/pre.js" />
+					<Add option="--shell-file src/emscripten/shell.html" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
-					<Add option="--pre-js pre.js" />
+					<Add option="-O2" />
+					<Add option="--closure 1" />
 				</Linker>
 			</Target>
 			<Target title="Debug Any/Dummy">
@@ -931,10 +934,6 @@ HW3SOUND for 3D hardware sound  support
 		<Unit filename="comptime.mk" />
 		<Unit filename="comptime.sh" />
 		<Unit filename="cpdebug.mk" />
-		<Unit filename="pre.js">
-			<Option target="Debug Emscripten/SDL" />
-			<Option target="Release Emscripten/SDL" />
-		</Unit>
 		<Unit filename="src/am_map.c">
 			<Option compilerVar="CC" />
 			<Option target="Debug Native/SDL" />
@@ -1882,6 +1881,14 @@ HW3SOUND for 3D hardware sound  support
 			<Option compilerVar="CC" />
 			<Option target="Debug Any/Dummy" />
 			<Option target="Release Any/Dummy" />
+		</Unit>
+		<Unit filename="src/emscripten/pre.js">
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
+		</Unit>
+		<Unit filename="src/emscripten/shell.html">
+			<Option target="Debug Emscripten/SDL" />
+			<Option target="Release Emscripten/SDL" />
 		</Unit>
 		<Unit filename="src/f_finale.c">
 			<Option compilerVar="CC" />
