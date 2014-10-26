@@ -334,7 +334,6 @@ HW3SOUND for 3D hardware sound  support
 				<Linker>
 					<Add option="--preload-file bin/Resources/webdata@/" />
 					<Add option="--pre-js src/emscripten/pre.js" />
-					<Add option="--post-js src/emscripten/post.js" />
 					<Add option="--shell-file src/emscripten/shell.html" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
 					<Add option="-s ASSERTIONS=2" />
@@ -347,7 +346,7 @@ HW3SOUND for 3D hardware sound  support
 				<Option type="0" />
 				<Option compiler="emcc" />
 				<Compiler>
-					<Add option="-Oz" />
+					<Add option="-O2" />
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DNDEBUG" />
@@ -359,7 +358,6 @@ HW3SOUND for 3D hardware sound  support
 				<Linker>
 					<Add option="--preload-file bin/Resources/webdata@/" />
 					<Add option="--pre-js src/emscripten/pre.js" />
-					<Add option="--post-js src/emscripten/post.js" />
 					<Add option="--shell-file src/emscripten/shell.html" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
 					<Add option="-O2" />
