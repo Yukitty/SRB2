@@ -361,7 +361,6 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="--shell-file src/emscripten/shell.html" />
 					<Add option="-s TOTAL_MEMORY=402653184" />
 					<Add option="-O2" />
-					<Add option="--closure 1" />
 				</Linker>
 			</Target>
 			<Target title="Debug Any/Dummy">
