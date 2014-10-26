@@ -326,6 +326,7 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="-DPARANOIA" />
 					<Add option="-DRANGECHECK" />
 					<Add option="-D_DEBUG" />
+					<Add option="-DCOMPVERSION" />
 					<Add option="-DNOASM" />
 					<Add option="-DNONET" />
 					<Add option="-DNOMD5" />
@@ -349,6 +350,7 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DNDEBUG" />
+					<Add option="-DCOMPVERSION" />
 					<Add option="-DNOASM" />
 					<Add option="-DNONET" />
 					<Add option="-DNOMD5" />
