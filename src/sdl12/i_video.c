@@ -1440,13 +1440,13 @@ void I_FinishUpdate(void)
 		else if (vid.bpp == 1 && !vid.direct)
 #ifdef __EMSCRIPTEN__
 		{
-			SDL_LockSurface(vidSurface);
+			if (SDL_MUSTLOCK(vidSurface)) SDL_LockSurface(vidSurface);
 			Uint8 *b = screens[0];
 			Uint32 *p = (Uint32*)vidSurface->pixels;
 			for (int y = 0; y < vidSurface->h; y++)
 				for (int x = 0; x < vidSurface->w; x++, p++, b++)
 					*p = localPalette[*b].b<<16|localPalette[*b].g<<8|localPalette[*b].r;
-			SDL_UnlockSurface(vidSurface);
+			if (SDL_MUSTLOCK(vidSurface)) SDL_UnlockSurface(vidSurface);
 		}
 #else
 		{
@@ -1526,10 +1526,7 @@ void I_FinishUpdate(void)
 			SDL_GP2X_WaitForBlitter();
 #endif
 
-#ifdef __EMSCRIPTEN__
-		SDL_LockSurface(vidSurface);
-		SDL_UnlockSurface(vidSurface);
-#else
+#ifndef __EMSCRIPTEN__
 		if (lockedsf == 0 && blited == 0 && vidSurface->flags&SDL_DOUBLEBUF)
 			SDL_Flip(vidSurface);
 		else if (blited != -2 && lockedsf == 0) //Alam: -2 for Win32 Direct, yea, i know
