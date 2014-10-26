@@ -129,7 +129,7 @@
 #endif
 
 // maximum number of windowed modes (see windowedModes[][])
-#if defined (_WIN32_WCE) || defined (DC) || defined (PSP) || defined(GP2X)
+#if defined (_WIN32_WCE) || defined (DC) || defined (PSP) || defined(GP2X) || defined (__EMSCRIPTEN__)
 #define MAXWINMODES (1)
 #elif defined (WII)
 #define MAXWINMODES (8)
@@ -210,7 +210,10 @@ static       SDL_bool    exposevideo = SDL_FALSE;
 // windowed video modes from which to choose from.
 static INT32 windowedModes[MAXWINMODES][2] =
 {
-#if !(defined (_WIN32_WCE) || defined (DC) || defined (PSP) || defined (GP2X) || defined (__EMSCRIPTEN__))
+#ifdef __EMSCRIPTEN__
+	{ 640, 400} // 1.60,2.00
+#else
+#if !(defined (_WIN32_WCE) || defined (DC) || defined (PSP) || defined (GP2X))
 #ifndef WII
 #ifndef _PS3
 	{1920,1200}, // 1.60,6.00
@@ -242,9 +245,6 @@ static INT32 windowedModes[MAXWINMODES][2] =
 	{ 400, 300}, // 1.33,1.25
 	{ 320, 240}, // 1.33,1.00
 #endif
-#ifdef __EMSCRIPTEN__
-	{ 640, 400}, // 1.60,2.00
-#else
 	{ 320, 200}, // 1.60,1.00
 #endif
 };
@@ -283,8 +283,10 @@ static void SDLSetMode(INT32 width, INT32 height, INT32 bpp, Uint32 flags)
 		vidSurface = SDL_SetVideoMode(width, height, bpp, flags|SDL_SWSURFACE|SDL_DOUBLEBUF);
 #endif
 #ifdef __EMSCRIPTEN__ // good idea, here too.
-	else
-		vidSurface = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
+	else {
+		vidSurface = SDL_SetVideoMode(width,height,8,SDL_SWSURFACE);
+		SDL_SetColors(vidSurface,localPalette,0,256);
+	}
 	(void)bpp;
 	(void)flags;
 #else
@@ -1232,9 +1234,7 @@ void I_GetEvent(void)
 					if (blitfilter) CV_SetValue(&cv_filter,1);
 #endif
 					SDLSetMode(realwidth, realheight, vid.bpp*8, surfaceFlagsW);
-#ifndef __EMSCRIPTEN__
 					if (vidSurface) SDL_SetColors(vidSurface, localPalette, 0, 256);
-#endif
 #ifdef FILTERS
 					CV_SetValue(&cv_filter,filtervalue);
 #endif
@@ -1377,8 +1377,8 @@ void I_FinishUpdate(void)
 #ifndef __EMSCRIPTEN__
 		SDL_PixelFormat *vidformat = vidSurface->format;
 		int lockedsf = 0;
-#endif
 		int blited = 0;
+#endif
 
 		rect.w = (Sint16)vid.width;
 		rect.h = (Sint16)vid.height;
@@ -1435,20 +1435,22 @@ void I_FinishUpdate(void)
 		}
 		else
 #endif
+#ifdef __EMSCRIPTEN__
+		{
+			SDL_LockSurface(vidSurface);
+			Uint8 *b = screens[0];
+			Uint8 *p = (Uint8*)vidSurface->pixels;
+			for (int y = 0; y < vid.height; y++) {
+				memcpy(p, b, vid.width);
+				b += vid.rowbytes;
+				p += vidSurface->pitch;
+			}
+			SDL_UnlockSurface(vidSurface);
+		}
+#else
 		if (bufSurface) //Alam: New Way to send video data
 			blited = SDL_BlitSurface(bufSurface,NULL,vidSurface,dstrect);
 		else if (vid.bpp == 1 && !vid.direct)
-#ifdef __EMSCRIPTEN__
-		{
-			if (SDL_MUSTLOCK(vidSurface)) SDL_LockSurface(vidSurface);
-			Uint8 *b = screens[0];
-			Uint32 *p = (Uint32*)vidSurface->pixels;
-			for (int y = 0; y < vidSurface->h; y++)
-				for (int x = 0; x < vidSurface->w; x++, p++, b++)
-					*p = localPalette[*b].b<<16|localPalette[*b].g<<8|localPalette[*b].r;
-			if (SDL_MUSTLOCK(vidSurface)) SDL_UnlockSurface(vidSurface);
-		}
-#else
 		{
 			Uint8 *bP,*vP; //Src, Dst
 			Uint16 bW, vW; // Pitch Remainder
@@ -1515,18 +1517,20 @@ void I_FinishUpdate(void)
 			}
 			if (SDL_MUSTLOCK(vidSurface)) SDL_UnlockSurface(vidSurface);
 		}
-#endif
 		else /// \todo 15t15,15tN, others?
 		{
 			;//NOP
 		}
+#endif
 
 #ifdef HAVE_GP2XSDL
 		//if (blited == 0)
 			SDL_GP2X_WaitForBlitter();
 #endif
 
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+		SDL_Flip(vidSurface);
+#else
 		if (lockedsf == 0 && blited == 0 && vidSurface->flags&SDL_DOUBLEBUF)
 			SDL_Flip(vidSurface);
 		else if (blited != -2 && lockedsf == 0) //Alam: -2 for Win32 Direct, yea, i know
@@ -1580,9 +1584,7 @@ void I_SetPalette(RGBA_t *palette)
 		localPalette[i].g = palette[i].s.green;
 		localPalette[i].b = palette[i].s.blue;
 	}
-#ifndef __EMSCRIPTEN__
 	if (vidSurface) SDL_SetColors(vidSurface, localPalette, 0, 256);
-#endif
 	if (bufSurface) SDL_SetColors(bufSurface, localPalette, 0, 256);
 }
 
