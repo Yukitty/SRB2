@@ -1194,32 +1194,6 @@ void D_SRB2Main(void)
 #endif
 	D_CleanFile();
 
-#ifdef __EMSCRIPTEN__
-	emscripten_exit_with_live_runtime();
-}
-void D_SRB2Main2(void)
-{
-	INT32 p;
-	INT32 pstartmap = 1;
-	boolean autostart = false;
-#endif
-
-#if 1 // md5s last updated 8/05/14
-
-	// Check MD5s of autoloaded files
-	W_VerifyFileMD5(0, "ac309fb3c7d4b5b685e2cd26beccf0e8"); // srb2.srb/srb2.wad
-	W_VerifyFileMD5(1, "f39b6c849295e3c81875726e8cc0e2c7"); // zones.dta
-	W_VerifyFileMD5(2, "cfca0f1c73023cbbd8f844f45480f799"); // player.dta
-	W_VerifyFileMD5(3, "85901ad4bf94637e5753d2ac2c03ea26"); // rings.dta
-	W_VerifyFileMD5(4, "3d6cfc185fd7c195eb934ce593b0248f"); // patch.dta
-	// don't check music.dta because people like to modify it, and it doesn't matter if they do
-	// ...except it does if they slip maps in there, and that's what W_VerifyNMUSlumps is for.
-#endif
-
-	mainwads = 5; // there are 5 wads not to unload
-
-	cht_Init();
-
 	//---------------------------------------------------- READY SCREEN
 	// we need to check for dedicated before initialization of some subsystems
 
@@ -1229,6 +1203,8 @@ void D_SRB2Main2(void)
 	//--------------------------------------------------------- CONSOLE
 	// setup loading screen
 	SCR_Startup();
+
+	cht_Init();
 
 	// we need the font of the console
 	CONS_Printf("HU_Init(): Setting up heads up display.\n");
@@ -1279,9 +1255,6 @@ void D_SRB2Main2(void)
 	CONS_Printf("M_Init(): Init miscellaneous info.\n");
 	M_Init();
 
-	CONS_Printf("R_Init(): Init SRB2 refresh daemon.\n");
-	R_Init();
-
 	// setting up sound
 	CONS_Printf("S_Init(): Setting up sound.\n");
 	if (M_CheckParm("-nosound"))
@@ -1298,6 +1271,39 @@ void D_SRB2Main2(void)
 	I_StartupSound();
 	I_InitMusic();
 	S_Init(cv_soundvolume.value, cv_digmusicvolume.value, cv_midimusicvolume.value);
+
+#ifdef __EMSCRIPTEN__
+	CONS_Printf("Waiting for wads to finish downloading...\n");
+	emscripten_exit_with_live_runtime(); // stop here and wait for wads to load
+}
+// resume after all wads have loaded.
+void D_SRB2Main2(void)
+{
+	INT32 p;
+	INT32 pstartmap = 1;
+	boolean autostart = false;
+#endif
+
+#ifdef __EMSCRIPTEN__
+	mainwads = 5;
+#else
+#if 1 // md5s last updated 8/05/14
+
+	// Check MD5s of autoloaded files
+	W_VerifyFileMD5(0, "ac309fb3c7d4b5b685e2cd26beccf0e8"); // srb2.srb/srb2.wad
+	W_VerifyFileMD5(1, "f39b6c849295e3c81875726e8cc0e2c7"); // zones.dta
+	W_VerifyFileMD5(2, "cfca0f1c73023cbbd8f844f45480f799"); // player.dta
+	W_VerifyFileMD5(3, "85901ad4bf94637e5753d2ac2c03ea26"); // rings.dta
+	W_VerifyFileMD5(4, "3d6cfc185fd7c195eb934ce593b0248f"); // patch.dta
+	// don't check music.dta because people like to modify it, and it doesn't matter if they do
+	// ...except it does if they slip maps in there, and that's what W_VerifyNMUSlumps is for.
+#endif
+
+	mainwads = 5; // there are 5 wads not to unload
+#endif
+
+	CONS_Printf("R_Init(): Init SRB2 refresh daemon.\n");
+	R_Init();
 
 	CONS_Printf("ST_Init(): Init status bar.\n");
 	ST_Init();
