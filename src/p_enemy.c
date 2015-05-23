@@ -5024,7 +5024,7 @@ void A_MaceRotate(mobj_t *actor)
 		actor->movecount += actor->target->lastlook;
 		actor->movecount &= FINEMASK;
 
-		actor->threshold = FixedMul(FINECOSINE(actor->movecount), actor->target->lastlook);
+		actor->threshold = FixedMul(FINECOSINE(actor->movecount), actor->target->lastlook << FRACBITS);
 
 		v[0] = FRACUNIT;
 		v[1] = 0;
@@ -5032,7 +5032,7 @@ void A_MaceRotate(mobj_t *actor)
 		v[3] = FRACUNIT;
 
 		// Calculate the angle matrixes for the link.
-		res = VectorMatrixMultiply(v, *RotateXMatrix(FixedAngle(actor->threshold << FRACBITS)));
+		res = VectorMatrixMultiply(v, *RotateXMatrix(FixedAngle(actor->threshold)));
 		M_Memcpy(&v, res, sizeof(v));
 		res = VectorMatrixMultiply(v, *RotateZMatrix(actor->target->health << ANGLETOFINESHIFT));
 		M_Memcpy(&v, res, sizeof(v));
@@ -7650,26 +7650,33 @@ void A_SetObjectFlags(mobj_t *actor)
 {
 	INT32 locvar1 = var1;
 	INT32 locvar2 = var2;
+	boolean unlinkthings = false;
 #ifdef HAVE_BLUA
 	if (LUA_CallAction("A_SetObjectFlags", actor))
 		return;
 #endif
 
-	P_UnsetThingPosition(actor);
-	if (sector_list)
-	{
-		P_DelSeclist(sector_list);
-		sector_list = NULL;
+	if (locvar2 == 2)
+		locvar1 = actor->flags | locvar1;
+	else if (locvar2 == 1)
+		locvar1 = actor->flags & ~locvar1;
+
+	if ((locvar1 & (MF_NOBLOCKMAP|MF_NOSECTOR)) != (actor->flags & (MF_NOBLOCKMAP|MF_NOSECTOR))) // Blockmap/sector status has changed, so reset the links
+		unlinkthings = true;
+
+	if (unlinkthings) {
+		P_UnsetThingPosition(actor);
+		if (sector_list)
+		{
+			P_DelSeclist(sector_list);
+			sector_list = NULL;
+		}
 	}
 
-	if (locvar2 == 2)
-		actor->flags |= locvar1;
-	else if (locvar2 == 1)
-		actor->flags &= ~locvar1;
-	else
-		actor->flags = locvar1;
+	actor->flags = locvar1;
 
-	P_SetThingPosition(actor);
+	if (unlinkthings)
+		P_SetThingPosition(actor);
 }
 
 // Function: A_SetObjectFlags2
