@@ -219,8 +219,6 @@ set(SRB2_CONFIG_HWRENDER ON CACHE BOOL
 	"Enable hardware rendering through OpenGL.")
 set(SRB2_CONFIG_USEASM OFF CACHE BOOL
 	"Enable NASM tmap implementation for software mode speedup.")
-set(SRB2_CONFIG_YASM OFF CACHE BOOL
-	"Use YASM in place of NASM.")
 set(SRB2_CONFIG_STATIC_OPENGL OFF CACHE BOOL
 	"Use statically linked OpenGL. NOT RECOMMENDED.")
 
@@ -386,13 +384,8 @@ if(${SRB2_CONFIG_HWRENDER} AND ${SRB2_CONFIG_STATIC_OPENGL})
 endif()
 
 if(${SRB2_CONFIG_USEASM})
-	if(${SRB2_CONFIG_YASM})
-		set(CMAKE_ASM_YASM_SOURCE_FILE_EXTENSIONS ${CMAKE_ASM_YASM_SOURCE_FILE_EXTENSIONS} nas)
-		enable_language(ASM_YASM)
-	else()
-		set(CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS ${CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS} nas)
-		enable_language(ASM_NASM)
-	endif()
+	set(CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS ${CMAKE_ASM_NASM_SOURCE_FILE_EXTENSIONS} nas)
+	enable_language(ASM_NASM)
 	set(SRB2_USEASM ON)
 	add_definitions(-DUSEASM)
 else()
@@ -423,10 +416,6 @@ add_definitions(-DCMAKECONFIG)
 
 add_subdirectory(sdl)
 
-if(${CMAKE_SYSTEM} MATCHES Windows)
-	add_subdirectory(win32)
-endif()
-
-if(NOT ${SRB2_SDL2_AVAILABLE} AND NOT ${SRB2_WIN32_AVAILABLE})
+if(NOT ${SRB2_SDL2_AVAILABLE})
 	message(FATAL_ERROR "There are no targets available to build an SRB2 executable. :(")
 endif()
