@@ -217,6 +217,73 @@ void P_DoNightsScore(player_t *player)
 	dummymo->destscale = 2*FRACUNIT;
 }
 
+//
+// P_DoMatchSuper
+//
+// Checks if you have all 7 pw_emeralds, then turns you "super". =P
+//
+void P_DoMatchSuper(player_t *player)
+{
+	UINT16 match_emeralds = player->powers[pw_emeralds];
+	boolean doteams = false;
+	int i;
+
+	// If this gametype has teams, check every player on your team for emeralds.
+	if (G_GametypeHasTeams())
+	{
+		doteams = true;
+		for (i = 0; i < MAXPLAYERS; i++)
+			if (players[i].ctfteam == player->ctfteam)
+				match_emeralds |= players[i].powers[pw_emeralds];
+	}
+
+	if (!ALL7EMERALDS(match_emeralds))
+		return;
+
+	// Got 'em all? Turn "super"!
+	emeraldspawndelay = invulntics + 1;
+	player->powers[pw_emeralds] = 0;
+	player->powers[pw_invulnerability] = emeraldspawndelay;
+	player->powers[pw_sneakers] = emeraldspawndelay;
+	if (P_IsLocalPlayer(player) && !player->powers[pw_super])
+	{
+		S_StopMusic();
+		if (mariomode)
+		{
+			S_ChangeMusic(mus_minvnc, false);
+			G_GhostAddColor(GHC_INVINCIBLE);
+		}
+		else
+			S_ChangeMusic(mus_invinc, false);
+	}
+
+	// Also steal 50 points from every enemy, sealing your victory.
+	P_StealPlayerScore(player, 50);
+
+	// In a team game?
+	// Check everyone else on your team for emeralds, and turn those helpful assisting players invincible too.
+	if (doteams)
+		for (i = 0; i < MAXPLAYERS; i++)
+			if (playeringame[i] && players[i].ctfteam == player->ctfteam
+			&& players[i].powers[pw_emeralds] != 0)
+			{
+				players[i].powers[pw_emeralds] = 0;
+				player->powers[pw_invulnerability] = invulntics + 1;
+				player->powers[pw_sneakers] = player->powers[pw_invulnerability];
+				if (P_IsLocalPlayer(player) && !player->powers[pw_super])
+				{
+					S_StopMusic();
+					if (mariomode)
+					{
+						S_ChangeMusic(mus_minvnc, false);
+						G_GhostAddColor(GHC_INVINCIBLE);
+					}
+					else
+						S_ChangeMusic(mus_invinc, false);
+				}
+			}
+}
+
 /** Takes action based on a ::MF_SPECIAL thing touched by a player.
   * Actually, this just checks a few things (heights, toucher->player, no
   * objectplace, no dead or disappearing things)
@@ -437,7 +504,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 			{
 				INT32 pindex = special->info->mass - (INT32)pw_infinityring;
 
-				player->powers[special->info->mass] += (UINT16)special->info->reactiontime;
+				player->powers[special->info->mass] += (UINT16)special->reactiontime;
 				player->ringweapons |= 1 << (pindex-1);
 
 				if (player->powers[special->info->mass] > rw_maximums[pindex])
@@ -524,7 +591,10 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 				return;
 
 			if (special->threshold)
+			{
 				player->powers[pw_emeralds] |= special->info->speed;
+				P_DoMatchSuper(player);
+			}
 			else
 				emeralds |= special->info->speed;
 
@@ -545,6 +615,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 				return;
 
 			player->powers[pw_emeralds] |= special->threshold;
+			P_DoMatchSuper(player);
 			break;
 
 		// Secret emblem thingy
@@ -1356,7 +1427,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 			}
 
 			if (player->powers[pw_invulnerability] || player->powers[pw_flashing]
-			|| (player->powers[pw_super] && !(ALL7EMERALDS(player->powers[pw_emeralds]))))
+			|| player->powers[pw_super])
 				return;
 			if (player->powers[pw_shield] || player->bot)  //If One-Hit Shield
 			{
@@ -2434,16 +2505,7 @@ static inline boolean P_TagDamage(mobj_t *target, mobj_t *inflictor, mobj_t *sou
 		P_PlayerRingBurst(player, player->mo->health - 1);
 	}
 
-	if (inflictor && ((inflictor->flags & MF_MISSILE) || inflictor->player) && player->powers[pw_super] && ALL7EMERALDS(player->powers[pw_emeralds]))
-	{
-		player->health -= 10;
-		if (player->health < 2)
-			player->health = 2;
-		target->health = player->health;
-	}
-	else
-		player->health = target->health = 1;
-
+	player->health = target->health = 1;
 	return true;
 }
 
@@ -2654,15 +2716,12 @@ static void P_ShieldDamage(player_t *player, mobj_t *inflictor, mobj_t *source, 
 
 static void P_RingDamage(player_t *player, mobj_t *inflictor, mobj_t *source, INT32 damage, UINT8 damagetype)
 {
-	if (!(inflictor && ((inflictor->flags & MF_MISSILE) || inflictor->player) && player->powers[pw_super] && ALL7EMERALDS(player->powers[pw_emeralds])))
-	{
-		P_DoPlayerPain(player, source, inflictor);
+	P_DoPlayerPain(player, source, inflictor);
 
-		P_ForceFeed(player, 40, 10, TICRATE, 40 + min(damage, 100)*2);
+	P_ForceFeed(player, 40, 10, TICRATE, 40 + min(damage, 100)*2);
 
-		if ((source && source->type == MT_SPIKE) || damagetype == DMG_SPIKE) // spikes
-			S_StartSound(player->mo, sfx_spkdth);
-	}
+	if ((source && source->type == MT_SPIKE) || damagetype == DMG_SPIKE) // spikes
+		S_StartSound(player->mo, sfx_spkdth);
 
 	if (source && source->player && !player->powers[pw_super]) //don't score points against super players
 	{
@@ -2913,7 +2972,7 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 			}
 		}
 		else if (player->powers[pw_invulnerability] || player->powers[pw_flashing] // ignore bouncing & such in invulnerability
-			|| (player->powers[pw_super] && !(ALL7EMERALDS(player->powers[pw_emeralds]) && inflictor && ((inflictor->flags & MF_MISSILE) || inflictor->player))))
+			|| player->powers[pw_super])
 		{
 			if (force || (inflictor && (inflictor->flags & MF_MISSILE)
 				&& (inflictor->flags2 & MF2_SUPERFIRE)
@@ -2960,24 +3019,7 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 			}
 		}
 
-		if (inflictor && ((inflictor->flags & MF_MISSILE) || inflictor->player) && player->powers[pw_super] && ALL7EMERALDS(player->powers[pw_emeralds]))
-		{
-			if (player->powers[pw_shield])
-			{
-				P_RemoveShield(player);
-				return true;
-			}
-			else
-			{
-				player->health -= (10 * (1 << (INT32)(player->powers[pw_super] / 10500)));
-				if (player->health < 2)
-					player->health = 2;
-			}
-
-			if (gametype == GT_CTF && (player->gotflag & (GF_REDFLAG|GF_BLUEFLAG)))
-				P_PlayerFlagBurst(player, false);
-		}
-		else if (damagetype & DMG_DEATHMASK)
+		if (damagetype & DMG_DEATHMASK)
 			player->health = 0;
 		else
 		{
@@ -3001,13 +3043,7 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 		P_DamageMobj(source, target, target, 1, 0);
 
 	// do the damage
-	if (player && player->powers[pw_super] && ALL7EMERALDS(player->powers[pw_emeralds]) && inflictor && ((inflictor->flags & MF_MISSILE) || inflictor->player))
-	{
-		target->health -= (10 * (1 << (INT32)(player->powers[pw_super] / 10500)));
-		if (target->health < 2)
-			target->health = 2;
-	}
-	else if (damagetype & DMG_DEATHMASK)
+	if (damagetype & DMG_DEATHMASK)
 		target->health = 0;
 	else
 		target->health -= damage;
@@ -3022,10 +3058,7 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 	}
 
 	if (player)
-	{
-		if (!(player->powers[pw_super] && ALL7EMERALDS(player->powers[pw_emeralds])))
-			P_ResetPlayer(target->player);
-	}
+		P_ResetPlayer(target->player);
 	else
 		switch (target->type)
 		{
@@ -3051,10 +3084,7 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 		if (target->state == &states[target->info->spawnstate] && target->info->seestate != S_NULL)
 		{
 			if (player)
-			{
-				if (!(player->powers[pw_super] && ALL7EMERALDS(player->powers[pw_emeralds])))
-					P_SetPlayerMobjState(target, target->info->seestate);
-			}
+				P_SetPlayerMobjState(target, target->info->seestate);
 			else
 				P_SetMobjState(target, target->info->seestate);
 		}
@@ -3093,11 +3123,7 @@ void P_PlayerRingBurst(player_t *player, INT32 num_rings)
 		P_PlayerEmeraldBurst(player, false);
 
 	// Spill weapons first
-	if (player->ringweapons)
-		P_PlayerWeaponPanelBurst(player);
-
-	// Spill the ammo
-	P_PlayerWeaponAmmoBurst(player);
+	P_PlayerWeaponPanelOrAmmoBurst(player);
 
 	for (i = 0; i < num_rings; i++)
 	{
@@ -3352,6 +3378,75 @@ void P_PlayerWeaponAmmoBurst(player_t *player)
 
 		i++;
 	}
+}
+
+void P_PlayerWeaponPanelOrAmmoBurst(player_t *player)
+{
+	mobj_t *mo;
+	angle_t fa;
+	fixed_t ns;
+	INT32 i = 0;
+	fixed_t z;
+
+	#define SETUP_DROP(thingtype) \
+		z = player->mo->z; \
+		if (player->mo->eflags & MFE_VERTICALFLIP) \
+			z += player->mo->height - mobjinfo[thingtype].height; \
+		fa = ((i*FINEANGLES/16) + (player->mo->angle>>ANGLETOFINESHIFT)) & FINEMASK; \
+		ns = FixedMul(3*FRACUNIT, player->mo->scale); \
+
+	#define DROP_WEAPON(rwflag, pickup, ammo, power) \
+	if (player->ringweapons & rwflag) \
+	{ \
+		player->ringweapons &= ~rwflag; \
+		SETUP_DROP(pickup) \
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, pickup); \
+		mo->reactiontime = 0; \
+		mo->flags2 |= MF2_DONTRESPAWN; \
+		mo->flags &= ~(MF_NOGRAVITY|MF_NOCLIPHEIGHT); \
+		P_SetTarget(&mo->target, player->mo); \
+		mo->fuse = 12*TICRATE; \
+		mo->destscale = player->mo->scale; \
+		P_SetScale(mo, player->mo->scale); \
+		mo->momx = FixedMul(FINECOSINE(fa),ns); \
+		if (!(twodlevel || (player->mo->flags2 & MF2_TWOD))) \
+			mo->momy = FixedMul(FINESINE(fa),ns); \
+		P_SetObjectMomZ(mo, 4*FRACUNIT, false); \
+		if (i & 1) \
+			P_SetObjectMomZ(mo, 4*FRACUNIT, true); \
+		++i; \
+	} \
+	else if (player->powers[power] > 0) \
+	{ \
+		SETUP_DROP(ammo) \
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, ammo); \
+		mo->health = player->powers[power]; \
+		mo->flags2 |= MF2_DONTRESPAWN; \
+		mo->flags &= ~(MF_NOGRAVITY|MF_NOCLIPHEIGHT); \
+		P_SetTarget(&mo->target, player->mo); \
+		mo->fuse = 12*TICRATE; \
+		mo->destscale = player->mo->scale; \
+		P_SetScale(mo, player->mo->scale); \
+		mo->momx = FixedMul(FINECOSINE(fa),ns); \
+		if (!(twodlevel || (player->mo->flags2 & MF2_TWOD))) \
+			mo->momy = FixedMul(FINESINE(fa),ns); \
+		P_SetObjectMomZ(mo, 3*FRACUNIT, false); \
+		if (i & 1) \
+			P_SetObjectMomZ(mo, 3*FRACUNIT, true); \
+		player->powers[power] = 0; \
+		++i; \
+	}
+
+	DROP_WEAPON(RW_BOUNCE, MT_BOUNCEPICKUP, MT_BOUNCERING, pw_bouncering);
+	DROP_WEAPON(RW_RAIL, MT_RAILPICKUP, MT_RAILRING, pw_railring);
+	DROP_WEAPON(RW_AUTO, MT_AUTOPICKUP, MT_AUTOMATICRING, pw_automaticring);
+	DROP_WEAPON(RW_EXPLODE, MT_EXPLODEPICKUP, MT_EXPLOSIONRING, pw_explosionring);
+	DROP_WEAPON(RW_SCATTER, MT_SCATTERPICKUP, MT_SCATTERRING, pw_scatterring);
+	DROP_WEAPON(RW_GRENADE, MT_GRENADEPICKUP, MT_GRENADERING, pw_grenadering);
+	DROP_WEAPON(0, 0, MT_INFINITYRING, pw_infinityring);
+
+	#undef DROP_WEAPON
+	#undef SETUP_DROP
 }
 
 //
