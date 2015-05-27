@@ -3740,52 +3740,37 @@ static const char *const STATE_LIST[] = { // array length left dynamic for sanit
 	// Thok
 	"S_THOK",
 
+	// Player
 	"S_PLAY_STND",
-	"S_PLAY_TAP1",
-	"S_PLAY_TAP2",
-	"S_PLAY_RUN1",
-	"S_PLAY_RUN2",
-	"S_PLAY_RUN3",
-	"S_PLAY_RUN4",
-	"S_PLAY_RUN5",
-	"S_PLAY_RUN6",
-	"S_PLAY_RUN7",
-	"S_PLAY_RUN8",
-	"S_PLAY_SPD1",
-	"S_PLAY_SPD2",
-	"S_PLAY_SPD3",
-	"S_PLAY_SPD4",
-	"S_PLAY_ATK1",
-	"S_PLAY_ATK2",
-	"S_PLAY_ATK3",
-	"S_PLAY_ATK4",
-	"S_PLAY_SPRING",
-	"S_PLAY_FALL1",
-	"S_PLAY_FALL2",
-	"S_PLAY_ABL1",
-	"S_PLAY_ABL2",
-	"S_PLAY_SPC1",
-	"S_PLAY_SPC2",
-	"S_PLAY_SPC3",
-	"S_PLAY_SPC4",
-	"S_PLAY_CLIMB1",
-	"S_PLAY_CLIMB2",
-	"S_PLAY_CLIMB3",
-	"S_PLAY_CLIMB4",
-	"S_PLAY_CLIMB5",
-	"S_PLAY_GASP",
+	"S_PLAY_WAIT",
+	"S_PLAY_WALK",
+	"S_PLAY_RUN",
 	"S_PLAY_PAIN",
-	"S_PLAY_DIE",
-	"S_PLAY_TEETER1",
-	"S_PLAY_TEETER2",
-	"S_PLAY_CARRY",
-	"S_PLAY_SUPERSTAND",
-	"S_PLAY_SUPERWALK1",
-	"S_PLAY_SUPERWALK2",
-	"S_PLAY_SUPERFLY1",
-	"S_PLAY_SUPERFLY2",
-	"S_PLAY_SUPERTEETER",
-	"S_PLAY_SUPERHIT",
+	"S_PLAY_DEAD",
+	"S_PLAY_SPIN",
+	"S_PLAY_GASP",
+	"S_PLAY_JUMP",
+	"S_PLAY_FALL",
+	"S_PLAY_EDGE",
+	"S_PLAY_RIDE",
+
+	// CA_FLY
+	"S_PLAY_FLY",
+	"S_PLAY_FLY_TIRED",
+
+	// CA_GLIDEANDCLIMB
+	"S_PLAY_GLIDE",
+	"S_PLAY_CLING",
+	"S_PLAY_CLIMB",
+
+	// SF_SUPERANIMS
+	"S_PLAY_SUPER_STND",
+	"S_PLAY_SUPER_WALK",
+	"S_PLAY_SUPER_RUN",
+	"S_PLAY_SUPER_EDGE",
+	"S_PLAY_SUPER_PAIN",
+
+	// SF_SUPER
 	"S_PLAY_SUPERTRANS1",
 	"S_PLAY_SUPERTRANS2",
 	"S_PLAY_SUPERTRANS3",
@@ -4536,7 +4521,7 @@ static const char *const STATE_LIST[] = { // array length left dynamic for sanit
 	// S_PLAY_TAP1
 	"S_METALSONIC_WAIT1",
 	"S_METALSONIC_WAIT2",
-	// S_PLAY_RUN1
+	// S_PLAY_WALK
 	"S_METALSONIC_WALK1",
 	"S_METALSONIC_WALK2",
 	"S_METALSONIC_WALK3",
@@ -5390,6 +5375,7 @@ static const char *const STATE_LIST[] = { // array length left dynamic for sanit
 	"S_MAGN10",
 	"S_MAGN11",
 	"S_MAGN12",
+	"S_MAGN13",
 
 	"S_FORC1",
 	"S_FORC2",
@@ -7753,36 +7739,36 @@ struct {
 	{"FF_GOOWATER",FF_GOOWATER},               ///< Used with ::FF_SWIMMABLE. Makes thick bouncey goop.
 
 	// Angles
-	{"ANG1",ANG1},
-	{"ANG2",ANG2},
-	{"ANG10",ANG10},
-	{"ANG15",ANG15},
-	{"ANG20",ANG20},
-	{"ANG30",ANG30},
-	{"ANG60",ANG60},
-	{"ANG64h",ANG64h},
-	{"ANG105",ANG105},
-	{"ANG210",ANG210},
-	{"ANG255",ANG255},
-	{"ANG340",ANG340},
-	{"ANG350",ANG350},
-	{"ANGLE_11hh",ANGLE_11hh},
-	{"ANGLE_22h",ANGLE_22h},
-	{"ANGLE_45",ANGLE_45},
-	{"ANGLE_67h",ANGLE_67h},
-	{"ANGLE_90",ANGLE_90},
-	{"ANGLE_112h",ANGLE_112h},
-	{"ANGLE_135",ANGLE_135},
-	{"ANGLE_157h",ANGLE_157h},
-	{"ANGLE_180",ANGLE_180},
-	{"ANGLE_202h",ANGLE_202h},
-	{"ANGLE_225",ANGLE_225},
-	{"ANGLE_247h",ANGLE_247h},
-	{"ANGLE_270",ANGLE_270},
-	{"ANGLE_292h",ANGLE_292h},
-	{"ANGLE_315",ANGLE_315},
-	{"ANGLE_337h",ANGLE_337h},
-	{"ANGLE_MAX",ANGLE_MAX},
+	{"ANG1",ANG1>>16},
+	{"ANG2",ANG2>>16},
+	{"ANG10",ANG10>>16},
+	{"ANG15",ANG15>>16},
+	{"ANG20",ANG20>>16},
+	{"ANG30",ANG30>>16},
+	{"ANG60",ANG60>>16},
+	{"ANG64h",ANG64h>>16},
+	{"ANG105",ANG105>>16},
+	{"ANG210",ANG210>>16},
+	{"ANG255",ANG255>>16},
+	{"ANG340",ANG340>>16},
+	{"ANG350",ANG350>>16},
+	{"ANGLE_11hh",ANGLE_11hh>>16},
+	{"ANGLE_22h",ANGLE_22h>>16},
+	{"ANGLE_45",ANGLE_45>>16},
+	{"ANGLE_67h",ANGLE_67h>>16},
+	{"ANGLE_90",ANGLE_90>>16},
+	{"ANGLE_112h",ANGLE_112h>>16},
+	{"ANGLE_135",ANGLE_135>>16},
+	{"ANGLE_157h",ANGLE_157h>>16},
+	{"ANGLE_180",ANGLE_180>>16},
+	{"ANGLE_202h",ANGLE_202h>>16},
+	{"ANGLE_225",ANGLE_225>>16},
+	{"ANGLE_247h",ANGLE_247h>>16},
+	{"ANGLE_270",ANGLE_270>>16},
+	{"ANGLE_292h",ANGLE_292h>>16},
+	{"ANGLE_315",ANGLE_315>>16},
+	{"ANGLE_337h",ANGLE_337h>>16},
+	{"ANGLE_MAX",ANGLE_MAX>>16},
 
 	// P_Chase directions (dirtype_t)
 	{"DI_NODIR",DI_NODIR},
@@ -8508,6 +8494,27 @@ static inline int lib_getenum(lua_State *L)
 				return 1;
 			}
 		if (mathlib) return luaL_error(L, "sprite '%s' could not be found.\n", word);
+		return 0;
+	}
+	else if (fastncmp("SPR2_",word,4)) {
+		p = word+5;
+		for (i = 0; i < NUMPLAYERSPRITES; i++)
+			if (!spr2names[i][4])
+			{
+				// special 3-char cases, e.g. SPR2_RUN
+				// the spr2names entry will have "_" on the end, as in "RUN_"
+				if (spr2names[i][3] == '_' && !p[3]) {
+					if (fastncmp(p,spr2names[i],3)) {
+						lua_pushinteger(L, i);
+						return 1;
+					}
+				}
+				else if (fastncmp(p,spr2names[i],4)) {
+					lua_pushinteger(L, i);
+					return 1;
+				}
+			}
+		if (mathlib) return luaL_error(L, "player sprite '%s' could not be found.\n", word);
 		return 0;
 	}
 	else if (!mathlib && fastncmp("sfx_",word,4)) {

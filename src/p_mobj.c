@@ -144,42 +144,22 @@ boolean P_SetPlayerMobjState(mobj_t *mobj, statenum_t state)
 		switch (state)
 		{
 		case S_PLAY_STND:
-		case S_PLAY_TAP1:
-		case S_PLAY_TAP2:
+		case S_PLAY_WAIT:
 		case S_PLAY_GASP:
-			P_SetPlayerMobjState(mobj, S_PLAY_SUPERSTAND);
+			P_SetPlayerMobjState(mobj, S_PLAY_SUPER_STND);
 			return true;
-		case S_PLAY_FALL1:
-		case S_PLAY_SPRING:
-		case S_PLAY_RUN1:
-		case S_PLAY_RUN2:
-		case S_PLAY_RUN3:
-		case S_PLAY_RUN4:
-			P_SetPlayerMobjState(mobj, S_PLAY_SUPERWALK1);
+		case S_PLAY_FALL:
+		case S_PLAY_JUMP:
+		case S_PLAY_WALK:
+			P_SetPlayerMobjState(mobj, S_PLAY_SUPER_WALK);
 			return true;
-		case S_PLAY_FALL2:
-		case S_PLAY_RUN5:
-		case S_PLAY_RUN6:
-		case S_PLAY_RUN7:
-		case S_PLAY_RUN8:
-			P_SetPlayerMobjState(mobj, S_PLAY_SUPERWALK2);
+		case S_PLAY_RUN:
+			P_SetPlayerMobjState(mobj, S_PLAY_SUPER_RUN);
 			return true;
-		case S_PLAY_SPD1:
-		case S_PLAY_SPD2:
-			P_SetPlayerMobjState(mobj, S_PLAY_SUPERFLY1);
+		case S_PLAY_EDGE:
+			P_SetPlayerMobjState(mobj, S_PLAY_SUPER_EDGE);
 			return true;
-		case S_PLAY_SPD3:
-		case S_PLAY_SPD4:
-			P_SetPlayerMobjState(mobj, S_PLAY_SUPERFLY2);
-			return true;
-		case S_PLAY_TEETER1:
-		case S_PLAY_TEETER2:
-			P_SetPlayerMobjState(mobj, S_PLAY_SUPERTEETER);
-			return true;
-		case S_PLAY_ATK1:
-		case S_PLAY_ATK2:
-		case S_PLAY_ATK3:
-		case S_PLAY_ATK4:
+		case S_PLAY_SPIN:
 			if (!(player->charflags & SF_SUPERSPIN))
 				return true;
 			break;
@@ -197,23 +177,38 @@ boolean P_SetPlayerMobjState(mobj_t *mobj, statenum_t state)
 
 	// Set animation state
 	// The pflags version of this was just as convoluted.
-	if ((state >= S_PLAY_STND && state <= S_PLAY_TAP2) || (state >= S_PLAY_TEETER1 && state <= S_PLAY_TEETER2) || state == S_PLAY_CARRY
-	|| state == S_PLAY_SUPERSTAND || state == S_PLAY_SUPERTEETER)
+	switch(state)
+	{
+	case S_PLAY_STND:
+	case S_PLAY_WAIT:
+	case S_PLAY_EDGE:
+	case S_PLAY_RIDE:
+	case S_PLAY_SUPER_STND:
+	case S_PLAY_SUPER_EDGE:
 		player->panim = PA_IDLE;
-	else if ((state >= S_PLAY_RUN1 && state <= S_PLAY_RUN8)
-	|| (state >= S_PLAY_SUPERWALK1 && state <= S_PLAY_SUPERWALK2))
+		break;
+	case S_PLAY_WALK:
+	case S_PLAY_SUPER_WALK:
 		player->panim = PA_WALK;
-	else if ((state >= S_PLAY_SPD1 && state <= S_PLAY_SPD4)
-	|| (state >= S_PLAY_SUPERFLY1 && state <= S_PLAY_SUPERFLY2))
+		break;
+	case S_PLAY_RUN:
+	case S_PLAY_SUPER_RUN:
 		player->panim = PA_RUN;
-	else if (state >= S_PLAY_ATK1 && state <= S_PLAY_ATK4)
+		break;
+	case S_PLAY_SPIN:
 		player->panim = PA_ROLL;
-	else if (state >= S_PLAY_FALL1 && state <= S_PLAY_FALL2)
+		break;
+	case S_PLAY_FALL:
 		player->panim = PA_FALL;
-	else if (state >= S_PLAY_ABL1 && state <= S_PLAY_ABL2)
+		break;
+	case S_PLAY_FLY:
+	case S_PLAY_GLIDE:
 		player->panim = PA_ABILITY;
-	else
+		break;
+	default:
 		player->panim = PA_ETC;
+		break;
+	}
 
 	if (recursion++) // if recursion detected,
 		memset(seenstate = tempstate, 0, sizeof tempstate); // clear state table
@@ -277,8 +272,29 @@ boolean P_SetPlayerMobjState(mobj_t *mobj, statenum_t state)
 			}
 		}
 
-		mobj->sprite = st->sprite;
-		mobj->frame = st->frame;
+		// Player animations
+		if (st->sprite == SPR_PLAY)
+		{
+			UINT8 spr2 = st->frame & FF_FRAMEMASK;
+			UINT16 frame = (mobj->frame & FF_FRAMEMASK)+1;
+			if (mobj->sprite != SPR_PLAY)
+			{
+				mobj->sprite = SPR_PLAY;
+				frame = 0;
+			}
+			else if (mobj->sprite2 != spr2)
+				frame = 0;
+			mobj->sprite2 = spr2;
+			if (!mobj->skin || frame >= ((skin_t *)mobj->skin)->sprites[spr2].numframes)
+				frame = 0;
+			mobj->frame = frame|(st->frame&~FF_FRAMEMASK);
+		}
+		// Regular sprites
+		else
+		{
+			mobj->sprite = st->sprite;
+			mobj->frame = st->frame;
+		}
 
 		// Modified handling.
 		// Call action functions when the state is set
@@ -344,8 +360,30 @@ boolean P_SetMobjState(mobj_t *mobj, statenum_t state)
 		st = &states[state];
 		mobj->state = st;
 		mobj->tics = st->tics;
-		mobj->sprite = st->sprite;
-		mobj->frame = st->frame;
+
+		// Player animations
+		if (st->sprite == SPR_PLAY)
+		{
+			UINT8 spr2 = st->frame & FF_FRAMEMASK;
+			UINT16 frame = (mobj->frame & FF_FRAMEMASK)+1;
+			if (mobj->sprite != SPR_PLAY)
+			{
+				mobj->sprite = SPR_PLAY;
+				frame = 0;
+			}
+			else if (mobj->sprite2 != spr2)
+				frame = 0;
+			mobj->sprite2 = spr2;
+			if (!mobj->skin || frame >= ((skin_t *)mobj->skin)->sprites[spr2].numframes)
+				frame = 0;
+			mobj->frame = frame|(st->frame&~FF_FRAMEMASK);
+		}
+		// Regular sprites
+		else
+		{
+			mobj->sprite = st->sprite;
+			mobj->frame = st->frame;
+		}
 
 		// Modified handling.
 		// Call action functions when the state is set
@@ -622,14 +660,12 @@ void P_EmeraldManager(void)
 			else
 				break;
 
-			if (leveltime < TICRATE) // Start of map
-				spawnpoints[j]->threshold = 60*TICRATE + P_Random() * (TICRATE/5);
-			else
-				spawnpoints[j]->threshold = P_Random() * (TICRATE/5);
-
+			spawnpoints[j]->threshold = emeraldspawndelay + P_Random() * (TICRATE/5);
 			break;
 		}
 	}
+
+	emeraldspawndelay = 0;
 }
 
 //
@@ -677,7 +713,7 @@ void P_ExplodeMissile(mobj_t *mo)
 		S_StartSound(explodemo, sfx_cybdth);
 
 		// Hack: Release an animal.
-		P_DamageMobj(mo, NULL, NULL, 10000);
+		P_DamageMobj(mo, NULL, NULL, 1, DMG_INSTAKILL);
 	}
 
 	mo->flags &= ~MF_MISSILE;
@@ -1249,7 +1285,7 @@ void P_CheckGravity(mobj_t *mo, boolean affect)
 	if (mo->player)
 	{
 		if (mo->player->charability == CA_FLY && (mo->player->powers[pw_tailsfly]
-		|| (mo->state >= &states[S_PLAY_SPC1] && mo->state <= &states[S_PLAY_SPC4])))
+		|| mo->state-states == S_PLAY_FLY_TIRED))
 			gravityadd = gravityadd/3; // less gravity while flying
 		if (mo->player->pflags & PF_GLIDING)
 			gravityadd = gravityadd/3; // less gravity while gliding
@@ -2231,7 +2267,7 @@ static boolean P_ZMovement(mobj_t *mo)
 			// Kill enemies and bosses that fall into death pits.
 			if (mo->health)
 			{
-				P_KillMobj(mo, NULL, NULL);
+				P_KillMobj(mo, NULL, NULL, 0);
 				return false;
 			}
 		}
@@ -2582,7 +2618,7 @@ static void P_PlayerZMovement(mobj_t *mo)
 			goto nightsdone;
 		}
 		// Get up if you fell.
-		if (mo->state == &states[mo->info->painstate] || mo->state == &states[S_PLAY_SUPERHIT])
+		if (mo->state == &states[mo->info->painstate] || mo->state-states == S_PLAY_SUPER_PAIN)
 			P_SetPlayerMobjState(mo, S_PLAY_STND);
 
 #ifdef ESLOPE
@@ -2687,23 +2723,23 @@ static void P_PlayerZMovement(mobj_t *mo)
 						mo->tics = -1;
 					}
 					else if (mo->player->pflags & PF_JUMPED || (mo->player->pflags & (PF_SPINNING|PF_USEDOWN)) != (PF_SPINNING|PF_USEDOWN)
-					|| mo->player->powers[pw_tailsfly] || (mo->state >= &states[S_PLAY_SPC1] && mo->state <= &states[S_PLAY_SPC4]))
+					|| mo->player->powers[pw_tailsfly] || mo->state-states == S_PLAY_FLY_TIRED)
 					{
 						if (mo->player->cmomx || mo->player->cmomy)
 						{
 							if (mo->player->speed >= FixedMul(mo->player->runspeed, mo->scale) && mo->player->panim != PA_RUN)
-								P_SetPlayerMobjState(mo, S_PLAY_SPD1);
+								P_SetPlayerMobjState(mo, S_PLAY_RUN);
 							else if ((mo->player->rmomx || mo->player->rmomy) && mo->player->panim != PA_WALK)
-								P_SetPlayerMobjState(mo, S_PLAY_RUN1);
+								P_SetPlayerMobjState(mo, S_PLAY_WALK);
 							else if (!mo->player->rmomx && !mo->player->rmomy && mo->player->panim != PA_IDLE)
 								P_SetPlayerMobjState(mo, S_PLAY_STND);
 						}
 						else
 						{
 							if (mo->player->speed >= FixedMul(mo->player->runspeed, mo->scale) && mo->player->panim != PA_RUN)
-								P_SetPlayerMobjState(mo, S_PLAY_SPD1);
+								P_SetPlayerMobjState(mo, S_PLAY_RUN);
 							else if ((mo->momx || mo->momy) && mo->player->panim != PA_WALK)
-								P_SetPlayerMobjState(mo, S_PLAY_RUN1);
+								P_SetPlayerMobjState(mo, S_PLAY_WALK);
 							else if (!mo->momx && !mo->momy && mo->player->panim != PA_IDLE)
 								P_SetPlayerMobjState(mo, S_PLAY_STND);
 						}
@@ -2716,7 +2752,7 @@ static void P_PlayerZMovement(mobj_t *mo)
 
 					if (!(mo->player->pflags & PF_GLIDING))
 						mo->player->pflags &= ~PF_JUMPED;
-					mo->player->pflags &= ~PF_THOKKED;
+					mo->player->pflags &= ~(PF_THOKKED|PF_SHIELDABILITY);
 					//mo->player->pflags &= ~PF_GLIDING;
 					mo->player->jumping = 0;
 					mo->player->secondjump = 0;
@@ -3108,10 +3144,8 @@ void P_MobjCheckWater(mobj_t *mobj)
 			return;
 
 		if ((mobj->eflags & MFE_GOOWATER || wasingoo)) { // Decide what happens to your momentum when you enter/leave goopy water.
-			if (wasinwater && P_MobjFlip(mobj)*mobj->momz > 0)
-				mobj->momz = FixedMul(mobj->momz, FixedDiv(9*FRACUNIT, 8*FRACUNIT)); // Give the mobj a little out-of-goo boost.
-			else if (P_MobjFlip(mobj)*mobj->momz < 0)
-				mobj->momz = FixedMul(mobj->momz, FixedDiv(2*FRACUNIT, 5*FRACUNIT)); // KILL its momentum.
+			if (P_MobjFlip(mobj)*mobj->momz < 0) // You are entering the goo?
+				mobj->momz = FixedMul(mobj->momz, FixedDiv(2*FRACUNIT, 5*FRACUNIT)); // kill momentum significantly, to make the goo feel thick.
 		}
 		else if (wasinwater && P_MobjFlip(mobj)*mobj->momz > 0)
 			mobj->momz = FixedMul(mobj->momz, FixedDiv(780*FRACUNIT, 457*FRACUNIT)); // Give the mobj a little out-of-water boost.
@@ -3373,7 +3407,7 @@ void P_DestroyRobots(void)
 			continue;
 
 		// Found a target enemy
-		P_KillMobj(mo, players[consoleplayer].mo, players[consoleplayer].mo);
+		P_KillMobj(mo, players[consoleplayer].mo, players[consoleplayer].mo, 0);
 	}
 }
 
@@ -3646,7 +3680,7 @@ static void P_PlayerMobjThinker(mobj_t *mobj)
 			{
 				mobj->player->secondjump = 0;
 				mobj->player->powers[pw_tailsfly] = 0;
-				P_SetPlayerMobjState(mobj, S_PLAY_RUN1);
+				P_SetPlayerMobjState(mobj, S_PLAY_WALK);
 			}
 		}
 		mobj->pmomz = 0;
@@ -4062,7 +4096,7 @@ static void P_Boss3Thinker(mobj_t *mobj)
 					continue;
 
 				if (players[i].mo->eflags & MFE_UNDERWATER)
-					P_DamageMobj(players[i].mo, mobj, mobj, 1);
+					P_DamageMobj(players[i].mo, mobj, mobj, 1, 0);
 			}
 
 			// Make the water flash
@@ -4403,7 +4437,7 @@ static void P_Boss4PopSpikeballs(mobj_t *mobj)
 		P_SetTarget(&base->tracer, NULL);
 		for (seg = base; seg; seg = seg->hnext)
 			if (seg->health)
-				P_KillMobj(seg, NULL, NULL);
+				P_KillMobj(seg, NULL, NULL, 0);
 		base = next;
 	}
 }
@@ -4703,7 +4737,7 @@ static void P_Boss7Thinker(mobj_t *mobj)
 		{
 			INT32 i;
 
-			P_KillMobj(mobj, NULL, NULL);
+			P_KillMobj(mobj, NULL, NULL, 0);
 
 			// It was a team effort
 			for (i = 0; i < MAXPLAYERS; i++)
@@ -4754,7 +4788,7 @@ static void P_Boss7Thinker(mobj_t *mobj)
 				&& players[i].mo->z < mobj->z + mobj->height + 128*FRACUNIT) // You can't be in the vicinity, either...
 			{
 				// Punch him!
-				P_DamageMobj(players[i].mo, mobj, mobj, 1);
+				P_DamageMobj(players[i].mo, mobj, mobj, 1, 0);
 				mobj->state->nextstate = mobj->info->spawnstate;
 
 				// Laugh
@@ -4977,7 +5011,7 @@ static void P_Boss7Thinker(mobj_t *mobj)
 			if (players[i].mo->z < mobj->z - 64*FRACUNIT)
 				continue;
 
-			P_DamageMobj(players[i].mo, mobj, mobj, 1);
+			P_DamageMobj(players[i].mo, mobj, mobj, 1, 0);
 
 			// Laugh
 			S_StartSound(0, sfx_bewar1 + P_RandomKey(4));
@@ -6189,11 +6223,16 @@ void P_MobjThinker(mobj_t *mobj)
 			case MT_BLACKORB:
 			case MT_WHITEORB:
 			case MT_GREENORB:
-			case MT_YELLOWORB:
 			case MT_BLUEORB:
 			case MT_PITYORB:
 				if (!P_AddShield(mobj))
 					return;
+				break;
+			case MT_YELLOWORB:
+				if (!P_AddShield(mobj))
+					return;
+				if (mobj->target->player->homing)
+					P_SetMobjState(mobj, mobj->info->painstate);
 				break;
 			case MT_WATERDROP:
 				P_SceneryCheckWater(mobj);
@@ -6399,7 +6438,7 @@ void P_MobjThinker(mobj_t *mobj)
 		if (mobj->flags & MF_FIRE && mobj->type != MT_PUMA && mobj->type != MT_FIREBALL
 			&& (mobj->eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)))
 		{
-			P_KillMobj(mobj, NULL, NULL);
+			P_KillMobj(mobj, NULL, NULL, 0);
 			return;
 		}
 	}
@@ -7031,7 +7070,7 @@ void P_MobjThinker(mobj_t *mobj)
 			if (mobj->flags & MF_FIRE && mobj->type != MT_PUMA && mobj->type != MT_FIREBALL
 				&& (mobj->eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)))
 			{
-				P_KillMobj(mobj, NULL, NULL);
+				P_KillMobj(mobj, NULL, NULL, 0);
 				return;
 			}
 			break;
@@ -7270,7 +7309,7 @@ for (i = ((mobj->flags2 & MF2_STRONGBOX) ? strongboxamt : weakboxamt); i; --i) s
 			{
 				mobj->player->secondjump = 0;
 				mobj->player->powers[pw_tailsfly] = 0;
-				P_SetPlayerMobjState(mobj, S_PLAY_RUN1);
+				P_SetPlayerMobjState(mobj, S_PLAY_WALK);
 			}
 		}
 		mobj->pmomz = 0; // to prevent that weird rocketing gargoyle bug
@@ -7295,7 +7334,7 @@ for (i = ((mobj->flags2 & MF2_STRONGBOX) ? strongboxamt : weakboxamt); i; --i) s
 	if (mobj->flags & (MF_ENEMY|MF_BOSS) && mobj->health
 		&& P_CheckDeathPitCollide(mobj)) // extra pit check in case these didn't have momz
 	{
-		P_KillMobj(mobj, NULL, NULL);
+		P_KillMobj(mobj, NULL, NULL, DMG_DEATHPIT);
 		return;
 	}
 
@@ -7309,7 +7348,7 @@ for (i = ((mobj->flags2 & MF2_STRONGBOX) ? strongboxamt : weakboxamt); i; --i) s
 		&& !(mobj->flags & MF_NOCLIPHEIGHT)
 		&& mobj->health > 0)
 		{
-			P_KillMobj(mobj, NULL, NULL);
+			P_KillMobj(mobj, NULL, NULL, DMG_CRUSHED);
 			return;
 		}
 	}
@@ -7496,7 +7535,7 @@ void P_SceneryThinker(mobj_t *mobj)
 			{
 				mobj->player->secondjump = 0;
 				mobj->player->powers[pw_tailsfly] = 0;
-				P_SetPlayerMobjState(mobj, S_PLAY_RUN1);
+				P_SetPlayerMobjState(mobj, S_PLAY_WALK);
 			}
 		}
 		mobj->pmomz = 0; // to prevent that weird rocketing gargoyle bug

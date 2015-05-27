@@ -120,7 +120,7 @@ static consvar_t cons_hudlines = {"con_hudlines", "5", CV_CALL|CV_SAVE, CV_Unsig
 // number of lines console move per frame
 // (con_speed needs a limit, apparently)
 static CV_PossibleValue_t speed_cons_t[] = {{0, "MIN"}, {64, "MAX"}, {0, NULL}};
-static consvar_t cons_speed = {"con_speed", "8", CV_SAVE, speed_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
+static consvar_t cons_speed = {"con_speed", "32", CV_SAVE, speed_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
 
 // percentage of screen height to use for console
 static consvar_t cons_height = {"con_height", "50", CV_SAVE, CV_Unsigned, NULL, 0, NULL, NULL, 0, 0, NULL};
@@ -132,7 +132,7 @@ static consvar_t cons_backpic = {"con_backpic", "translucent", CV_SAVE, backpic_
 static CV_PossibleValue_t backcolor_cons_t[] = {{0, "White"}, {1, "Orange"},
 												{2, "Blue"}, {3, "Green"}, {4, "Gray"},
 												{5, "Red"}, {0, NULL}};
-consvar_t cons_backcolor = {"con_backcolor", "3", CV_SAVE, backcolor_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
+consvar_t cons_backcolor = {"con_backcolor", "Red", CV_SAVE, backcolor_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
 
 static void CON_Print(char *msg);
 

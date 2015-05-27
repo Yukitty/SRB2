@@ -268,6 +268,7 @@ typedef struct mobj_s
 	angle_t angle;  // orientation
 	spritenum_t sprite; // used to find patch_t and flip value
 	UINT32 frame; // frame number, plus bits see p_pspr.h
+	UINT8 sprite2; // player sprites
 
 	struct msecnode_s *touching_sectorlist; // a linked list of sectors where this object appears
 
@@ -447,5 +448,6 @@ void P_EmeraldManager(void);
 extern mapthing_t *huntemeralds[MAXHUNTEMERALDS];
 extern INT32 numhuntemeralds;
 extern boolean runemeraldmanager;
+extern UINT16 emeraldspawndelay;
 extern INT32 numstarposts;
 #endif
