@@ -661,7 +661,7 @@ void P_NightserizePlayer(player_t *player, INT32 nighttime)
 		player->mo->height = player->mo->tracer->height;
 	}
 
-	player->pflags &= ~(PF_USEDOWN|PF_JUMPDOWN|PF_ATTACKDOWN|PF_STARTDASH|PF_GLIDING|PF_JUMPED|PF_THOKKED|PF_SPINNING|PF_DRILLING);
+	player->pflags &= ~(PF_USEDOWN|PF_JUMPDOWN|PF_ATTACKDOWN|PF_STARTDASH|PF_GLIDING|PF_JUMPED|PF_THOKKED|PF_SHIELDABILITY|PF_SPINNING|PF_DRILLING);
 	player->homing = 0;
 	player->mo->fuse = 0;
 	player->speed = 0;
@@ -874,7 +874,7 @@ void P_DoPlayerPain(player_t *player, mobj_t *source, mobj_t *inflictor)
 // Useful when you want to kill everything the player is doing.
 void P_ResetPlayer(player_t *player)
 {
-	player->pflags &= ~(PF_ROPEHANG|PF_ITEMHANG|PF_MACESPIN|PF_SPINNING|PF_JUMPED|PF_GLIDING|PF_THOKKED|PF_CARRIED);
+	player->pflags &= ~(PF_ROPEHANG|PF_ITEMHANG|PF_MACESPIN|PF_SPINNING|PF_JUMPED|PF_GLIDING|PF_THOKKED|PF_SHIELDABILITY|PF_CARRIED);
 	player->jumping = 0;
 	player->secondjump = 0;
 	player->glidetime = 0;
@@ -3993,7 +3993,7 @@ static void P_DoJumpStuff(player_t *player, ticcmd_t *cmd)
 
 						if (player->charability == CA_HOMINGTHOK && !player->homing)
 						{
-							if (P_LookForEnemies(player))
+							if (P_LookForEnemies(player, true))
 							{
 								if (player->mo->tracer)
 									player->homing = 3*TICRATE;
@@ -6789,6 +6789,18 @@ static void P_MovePlayer(player_t *player)
 					if (!(player->powers[pw_super] || player->powers[pw_invulnerability]))
 						P_BlackOw(player);
 				}
+				// Attract shield activation
+				if ((player->powers[pw_shield] & SH_NOSTACK) == SH_ATTRACT)
+				{
+					if (!(player->pflags & PF_THOKKED))
+					{
+						player->pflags |= PF_THOKKED|PF_SHIELDABILITY;
+						player->homing = 2;
+						S_StartSound(player->mo, sfx_spdpad);
+						if (P_LookForEnemies(player, false) && player->mo->tracer)
+							player->homing = 3*TICRATE;
+					}
+				}
 			}
 			// Super Sonic move
 			if (player->charflags & SF_SUPER && player->powers[pw_super] && player->speed > FixedMul(5<<FRACBITS, player->mo->scale)
@@ -6805,12 +6817,14 @@ static void P_MovePlayer(player_t *player)
 	}
 
 	// HOMING option.
-	if (player->charability == CA_HOMINGTHOK)
+	if (player->charability == CA_HOMINGTHOK
+	|| (player->powers[pw_shield] & SH_NOSTACK) == SH_ATTRACT)
 	{
 		// If you've got a target, chase after it!
 		if (player->homing && player->mo->tracer)
 		{
-			P_SpawnThokMobj(player);
+			if (!(player->pflags & PF_SHIELDABILITY))
+				P_SpawnThokMobj(player);
 			P_HomingAttack(player->mo, player->mo->tracer);
 
 			// But if you don't, then stop homing.
@@ -6826,7 +6840,7 @@ static void P_MovePlayer(player_t *player)
 				if (player->mo->tracer->flags2 & MF2_FRET)
 					P_InstaThrust(player->mo, player->mo->angle, -(player->speed>>3));
 
-				if (!(player->mo->tracer->flags & MF_BOSS))
+				if (!(player->pflags & PF_SHIELDABILITY) && !(player->mo->tracer->flags & MF_BOSS))
 					player->pflags &= ~PF_THOKKED;
 			}
 		}
@@ -7407,9 +7421,9 @@ void P_NukeEnemies(mobj_t *inflictor, mobj_t *source, fixed_t radius)
 //
 // P_LookForEnemies
 // Looks for something you can hit - Used for homing attack
-// Includes monitors and springs!
+// If nonenemies is true, includes monitors and springs!
 //
-boolean P_LookForEnemies(player_t *player)
+boolean P_LookForEnemies(player_t *player, boolean nonenemies)
 {
 	mobj_t *mo;
 	thinker_t *think;
@@ -7422,7 +7436,8 @@ boolean P_LookForEnemies(player_t *player)
 			continue; // not a mobj thinker
 
 		mo = (mobj_t *)think;
-		if (!(mo->flags & (MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SPRING)))
+		if ((nonenemies && !(mo->flags & (MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SPRING)))
+		|| (!nonenemies && !(mo->flags & (MF_ENEMY|MF_BOSS))))
 			continue; // not a valid enemy
 
 		if (mo->health <= 0) // dead
@@ -7521,7 +7536,12 @@ void P_HomingAttack(mobj_t *source, mobj_t *enemy) // Home in on your target
 			ns = FixedMul(source->info->speed, source->scale);
 	}
 	else if (source->player)
-		ns = FixedDiv(FixedMul(source->player->actionspd, source->scale), 3*FRACUNIT/2);
+	{
+		if (source->player->charability == CA_HOMINGTHOK && !(source->player->pflags & PF_SHIELDABILITY))
+			ns = FixedDiv(FixedMul(source->player->actionspd, source->scale), 3*FRACUNIT/2);
+		else
+			ns = FixedMul(80*FRACUNIT, source->scale);
+	}
 
 	source->momx = FixedMul(FixedDiv(enemy->x - source->x, dist), ns);
 	source->momy = FixedMul(FixedDiv(enemy->y - source->y, dist), ns);
