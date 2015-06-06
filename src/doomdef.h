@@ -460,8 +460,10 @@ extern const char *compdate, *comptime, *comprevision;
 ///	Improved way of dealing with ping values and a ping limit.
 #define NEWPING
 
+#ifndef __EMSCRIPTEN__
 ///	See name of player in your crosshair
 #define SEENAMES
+#endif
 
 ///	Who put weights on my recycler?  ... Inuyasha did.
 ///	\note	XMOD port.

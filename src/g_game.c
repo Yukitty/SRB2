@@ -348,8 +348,13 @@ static CV_PossibleValue_t joyaxis_cons_t[] = {{0, "None"},
 #endif
 #endif
 
+#ifdef __EMSCRIPTEN__
+consvar_t cv_crosshair = {"crosshair", "Off", 0, crosshair_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
+consvar_t cv_crosshair2 = {"crosshair2", "Off", 0, crosshair_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
+#else
 consvar_t cv_crosshair = {"crosshair", "Cross", CV_SAVE, crosshair_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_crosshair2 = {"crosshair2", "Cross", CV_SAVE, crosshair_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
+#endif
 consvar_t cv_invertmouse = {"invertmouse", "Off", CV_SAVE, CV_OnOff, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_alwaysfreelook = {"alwaysmlook", "On", CV_SAVE, CV_OnOff, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_invertmouse2 = {"invertmouse2", "Off", CV_SAVE, CV_OnOff, NULL, 0, NULL, NULL, 0, 0, NULL};

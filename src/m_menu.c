@@ -1020,7 +1020,9 @@ static menuitem_t OP_P1ControlsMenu[] =
 	{IT_SUBMENU | IT_STRING, NULL, "Joystick Options...", &OP_Joystick1Def  ,  30},
 
 	{IT_STRING  | IT_CVAR, NULL, "Camera"  , &cv_chasecam  ,  50},
+#ifndef __EMSCRIPTEN__
 	{IT_STRING  | IT_CVAR, NULL, "Crosshair", &cv_crosshair , 60},
+#endif
 
 	{IT_STRING  | IT_CVAR, NULL, "Analog Control", &cv_useranalog,  80},
 };
@@ -1032,7 +1034,9 @@ static menuitem_t OP_P2ControlsMenu[] =
 	{IT_SUBMENU | IT_STRING, NULL, "Second Joystick Options...", &OP_Joystick2Def  ,  30},
 
 	{IT_STRING  | IT_CVAR, NULL, "Camera"  , &cv_chasecam2 , 50},
+#ifndef __EMSCRIPTEN__
 	{IT_STRING  | IT_CVAR, NULL, "Crosshair", &cv_crosshair2, 60},
+#endif
 
 	{IT_STRING  | IT_CVAR, NULL, "Analog Control", &cv_useranalog2,  80},
 };
@@ -1096,10 +1100,11 @@ static menuitem_t OP_CameraControlsMenu[] =
 
 static menuitem_t OP_MiscControlsMenu[] =
 {
+#ifndef __EMSCRIPTEN__
 	{IT_CALL | IT_STRING2, NULL, "Custom Action 1",  M_ChangeControl, gc_custom1      },
 	{IT_CALL | IT_STRING2, NULL, "Custom Action 2",  M_ChangeControl, gc_custom2      },
 	{IT_CALL | IT_STRING2, NULL, "Custom Action 3",  M_ChangeControl, gc_custom3      },
-
+#endif
 	{IT_CALL | IT_STRING2, NULL, "Pause",            M_ChangeControl, gc_pause        },
 	{IT_CALL | IT_STRING2, NULL, "Console",          M_ChangeControl, gc_console      },
 };
@@ -1316,10 +1321,12 @@ static menuitem_t OP_GameOptionsMenu[] =
 	{IT_STRING | IT_CVAR | IT_CV_SLIDER,
 	                      NULL, "HUD Visibility",         &cv_translucenthud, 50},
 	{IT_STRING | IT_CVAR, NULL, "Timer Display",          &cv_timetic,     60},
+#ifndef __EMSCRIPTEN__
 #ifdef SEENAMES
 	{IT_STRING | IT_CVAR, NULL, "HUD Player Names",       &cv_seenames,    80},
 #endif
 	{IT_STRING | IT_CVAR, NULL, "Log Hazard Damage",      &cv_hazardlog,   90},
+#endif
 
 	{IT_STRING | IT_CVAR, NULL, "Console Back Color",     &cons_backcolor, 100},
 	{IT_STRING | IT_CVAR, NULL, "Console Text Size",      &cv_constextsize,110},
