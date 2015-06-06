@@ -1333,6 +1333,10 @@ void D_SRB2Main2(void)
 	mainwads = 4; // there are 5 wads not to unload
 #endif
 
+	// update cv_nextmap now that all the wads are loaded.
+	CV_AddValue(&cv_nextmap, 1);
+	CV_AddValue(&cv_nextmap, -1);
+
 	CONS_Printf("R_Init(): Init SRB2 refresh daemon.\n");
 	R_Init();
 
