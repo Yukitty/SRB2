@@ -2123,7 +2123,9 @@ boolean M_Responder(event_t *ev)
 			case KEY_JOY1 + 3:
 				ch = 'n';
 				break;
+#ifndef __EMSCRIPTEN__
 			case KEY_MOUSE1 + 1:
+#endif
 			case KEY_JOY1 + 1:
 				ch = KEY_BACKSPACE;
 				break;
