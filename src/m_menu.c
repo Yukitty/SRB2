@@ -233,7 +233,9 @@ static void M_ConfirmTeamScramble(INT32 choice);
 static void M_ConfirmTeamChange(INT32 choice);
 static void M_SecretsMenu(INT32 choice);
 static void M_SetupChoosePlayer(INT32 choice);
+#ifndef __EMSCRIPTEN__
 static void M_QuitSRB2(INT32 choice);
+#endif
 menu_t SP_MainDef, MP_MainDef, OP_MainDef;
 menu_t MISC_ScrambleTeamDef, MISC_ChangeTeamDef;
 
@@ -2260,9 +2262,11 @@ boolean M_Responder(event_t *ev)
 			// Screenshots on F8 now handled elsewhere
 			// Same with Moviemode on F9
 
+#ifndef __EMSCRIPTEN__ // You can't quit a webpage...
 			case KEY_F10: // Quit SRB2
 				M_QuitSRB2(0);
 				return true;
+#endif
 
 			case KEY_F11: // Gamma Level
 				CV_AddValue(&cv_usegamma, 1);
@@ -7418,6 +7422,7 @@ void M_QuitResponse(INT32 ch)
 	I_Quit();
 }
 
+#ifndef __EMSCRIPTEN__
 static void M_QuitSRB2(INT32 choice)
 {
 	// We pick index 0 which is language sensitive, or one at random,
@@ -7425,6 +7430,7 @@ static void M_QuitSRB2(INT32 choice)
 	(void)choice;
 	M_StartMessage(quitmsg[M_RandomKey(NUM_QUITMESSAGES)], M_QuitResponse, MM_YESNO);
 }
+#endif
 
 #ifdef HWRENDER
 // =====================================================================

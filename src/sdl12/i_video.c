@@ -1033,7 +1033,9 @@ static INT32 SDLJoyAxis(const Sint16 axis, evtype_t which)
 void I_GetEvent(void)
 {
 	SDL_Event inputEvent;
+#ifndef __EMSCRIPTEN__
 	static SDL_bool sdlquit = SDL_FALSE; //Alam: once, just once
+#endif
 	event_t event;
 
 	if (!graphics_started)
@@ -1209,11 +1211,15 @@ void I_GetEvent(void)
 				break;
 #ifndef  _WIN32_WCE
 			case SDL_QUIT:
+#ifdef __EMSCRIPTEN__
+				I_Quit();
+#else
 				if (!sdlquit)
 				{
 					sdlquit = SDL_TRUE;
 					M_QuitResponse('y');
 				}
+#endif
 				break;
 #endif
 #if defined(RPC_NO_WINDOWS_H) && !defined(_WIN32_WCE)
@@ -1345,6 +1351,7 @@ static inline boolean I_SkipFrame(void)
 	}
 }
 
+#if 0
 static inline SDL_bool SDLmatchVideoformat(void)
 {
 	const SDL_PixelFormat *vidformat = vidSurface->format;
@@ -1355,6 +1362,7 @@ static inline SDL_bool SDLmatchVideoformat(void)
 	 vidformat->Gmask == 0x03E0 && vidformat->Bmask == 0x001F )) &&
 	 !vidformat->Amask && (vidSurface->flags & SDL_RLEACCEL) == 0);
 }
+#endif
 
 //
 // I_FinishUpdate
