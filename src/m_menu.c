@@ -2272,15 +2272,17 @@ boolean M_Responder(event_t *ev)
 
 #ifdef __EMSCRIPTEN__
 			case KEY_BACKSPACE: // Pop up menu
+				if (con_destlines)
+					return false;
 #else
 			case KEY_ESCAPE: // Pop up menu
-#endif
 				if (chat_on)
 				{
 					HU_clearChatChars();
 					chat_on = false;
 				}
 				else
+#endif
 					M_StartControlPanel();
 				return true;
 		}
