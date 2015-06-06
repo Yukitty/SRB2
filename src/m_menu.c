@@ -299,7 +299,9 @@ menu_t OP_DataOptionsDef, OP_ScreenshotOptionsDef, OP_EraseDataDef;
 menu_t OP_GameOptionsDef, OP_ServerOptionsDef;
 menu_t OP_NetgameOptionsDef, OP_GametypeOptionsDef;
 menu_t OP_MonitorToggleDef;
+#ifndef __EMSCRIPTEN__
 static void M_ScreenshotOptions(INT32 choice);
+#endif
 static void M_EraseData(INT32 choice);
 
 // Drawing functions
@@ -1243,8 +1245,9 @@ static menuitem_t OP_SoundOptionsMenu[] =
 
 static menuitem_t OP_DataOptionsMenu[] =
 {
+#ifndef __EMSCRIPTEN__
 	{IT_STRING | IT_CALL, NULL, "Screenshot Options...", M_ScreenshotOptions, 10},
-
+#endif
 	{IT_STRING | IT_SUBMENU, NULL, "Erase Data...", &OP_EraseDataDef, 30},
 };
 
@@ -6653,6 +6656,7 @@ static void M_EraseData(INT32 choice)
 	M_StartMessage(va(esstr, eschoice),M_EraseDataResponse,MM_YESNO);
 }
 
+#ifndef __EMSCRIPTEN__
 static void M_ScreenshotOptions(INT32 choice)
 {
 	(void)choice;
@@ -6661,6 +6665,7 @@ static void M_ScreenshotOptions(INT32 choice)
 
 	M_SetupNextMenu(&OP_ScreenshotOptionsDef);
 }
+#endif
 
 // =============
 // JOYSTICK MENU

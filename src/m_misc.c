@@ -1486,6 +1486,10 @@ failure:
 
 boolean M_ScreenshotResponder(event_t *ev)
 {
+#ifdef __EMSCRIPTEN__
+	(void)ev;
+	return false;
+#else
 	INT32 ch = -1;
 	if (dedicated || ev->type != ev_keydown)
 		return false;
@@ -1498,6 +1502,7 @@ boolean M_ScreenshotResponder(event_t *ev)
 	else
 		return false;
 	return true;
+#endif
 }
 
 // ==========================================================================
