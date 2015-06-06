@@ -382,6 +382,7 @@ CV_PossibleValue_t gametype_cons_t[] =
 	{GT_COMPETITION, "Competition"},
 	{GT_RACE, "Race"},
 
+#ifndef __EMSCRIPTEN__
 	{GT_MATCH, "Match"},
 	{GT_TEAMMATCH, "Team Match"},
 
@@ -389,6 +390,7 @@ CV_PossibleValue_t gametype_cons_t[] =
 	{GT_HIDEANDSEEK, "Hide and Seek"},
 
 	{GT_CTF, "CTF"},
+#endif
 	{0, NULL}
 };
 consvar_t cv_newgametype = {"newgametype", "Co-op", CV_HIDEN|CV_CALL, gametype_cons_t, Newgametype_OnChange, 0, NULL, NULL, 0, 0, NULL};
@@ -978,8 +980,10 @@ static menuitem_t MP_SplitServerMenu[] =
 
 static menuitem_t MP_PlayerSetupMenu[] =
 {
+#ifndef __EMSCRIPTEN__
 	{IT_KEYHANDLER | IT_STRING,   NULL, "Your name",   M_HandleSetupMultiPlayer,   0},
 	{IT_KEYHANDLER | IT_STRING,   NULL, "Your color",  M_HandleSetupMultiPlayer,  16},
+#endif
 	{IT_KEYHANDLER | IT_STRING,   NULL, "Your player", M_HandleSetupMultiPlayer,  96}, // Tails 01-18-2001
 };
 
@@ -1155,6 +1159,7 @@ static menuitem_t OP_Mouse2OptionsMenu[] =
 
 static menuitem_t OP_VideoOptionsMenu[] =
 {
+#ifndef __EMSCRIPTEN__
 	{IT_STRING | IT_CALL,  NULL,   "Video Modes...",      M_VideoModeMenu,     10},
 
 #ifdef HWRENDER
@@ -1163,6 +1168,7 @@ static menuitem_t OP_VideoOptionsMenu[] =
 
 #if (defined (__unix__) && !defined (MSDOS)) || defined (UNIXCOMMON) || defined (HAVE_SDL)
 	{IT_STRING|IT_CVAR,      NULL, "Fullscreen",          &cv_fullscreen,    30},
+#endif
 #endif
 
 	{IT_STRING | IT_CVAR | IT_CV_SLIDER,
@@ -1316,7 +1322,9 @@ static menuitem_t OP_GameOptionsMenu[] =
 
 static menuitem_t OP_ServerOptionsMenu[] =
 {
+#ifndef __EMSCRIPTEN__
 	{IT_STRING | IT_SUBMENU, NULL, "General netgame options...",  &OP_NetgameOptionsDef,  10},
+#endif
 	{IT_STRING | IT_SUBMENU, NULL, "Gametype options...",         &OP_GametypeOptionsDef, 20},
 	{IT_STRING | IT_SUBMENU, NULL, "Random Monitor Toggles...",   &OP_MonitorToggleDef,   30},
 
@@ -1336,6 +1344,7 @@ static menuitem_t OP_ServerOptionsMenu[] =
 #endif
 };
 
+#ifndef __EMSCRIPTEN__
 static menuitem_t OP_NetgameOptionsMenu[] =
 {
 	{IT_STRING | IT_CVAR, NULL, "Time Limit",            &cv_timelimit,        10},
@@ -1357,6 +1366,7 @@ static menuitem_t OP_NetgameOptionsMenu[] =
 	{IT_STRING | IT_CVAR, NULL, "Autobalance Teams",            &cv_autobalance,      138},
 	{IT_STRING | IT_CVAR, NULL, "Scramble Teams on Map Change", &cv_scrambleonchange, 146},
 };
+#endif
 
 static menuitem_t OP_GametypeOptionsMenu[] =
 {
@@ -1372,6 +1382,7 @@ static menuitem_t OP_GametypeOptionsMenu[] =
 	{IT_STRING | IT_CVAR, NULL, "Number of Laps",        &cv_numlaps,          74},
 	{IT_STRING | IT_CVAR, NULL, "Use Map Lap Counts",    &cv_usemapnumlaps,    82},
 
+#ifndef __EMSCRIPTEN__
 	{IT_HEADER,           NULL, "MATCH",                 NULL,                 98},
 	{IT_STRING | IT_CVAR, NULL, "Scoring Type",          &cv_match_scoring,   106},
 
@@ -1380,6 +1391,7 @@ static menuitem_t OP_GametypeOptionsMenu[] =
 
 	{IT_HEADER,           NULL, "CTF",                   NULL,                146},
 	{IT_STRING | IT_CVAR, NULL, "Flag Respawn Time",     &cv_flagtime,        154},
+#endif
 };
 
 static menuitem_t OP_MonitorToggleMenu[] =
@@ -1707,7 +1719,9 @@ menu_t OP_SoundOptionsDef = DEFAULTMENUSTYLE("M_SOUND", OP_SoundOptionsMenu, &OP
 menu_t OP_GameOptionsDef = DEFAULTMENUSTYLE("M_GAME", OP_GameOptionsMenu, &OP_MainDef, 30, 30);
 menu_t OP_ServerOptionsDef = DEFAULTMENUSTYLE("M_SERVER", OP_ServerOptionsMenu, &OP_MainDef, 30, 30);
 
+#ifndef __EMSCRIPTEN__
 menu_t OP_NetgameOptionsDef = DEFAULTMENUSTYLE("M_SERVER", OP_NetgameOptionsMenu, &OP_ServerOptionsDef, 30, 30);
+#endif
 menu_t OP_GametypeOptionsDef = DEFAULTMENUSTYLE("M_SERVER", OP_GametypeOptionsMenu, &OP_ServerOptionsDef, 30, 30);
 menu_t OP_MonitorToggleDef =
 {
@@ -6367,15 +6381,18 @@ static void M_DrawSetupMultiPlayerMenu(void)
 	// use generic drawer for cursor, items and title
 	M_DrawGenericMenu();
 
+#ifndef __EMSCRIPTEN__
 	// draw name string
 	M_DrawTextBox(mx + 90, my - 8, MAXPLAYERNAME, 1);
 	V_DrawString(mx + 98, my, V_ALLOWLOWERCASE, setupm_name);
+#endif
 
 	// draw skin string
 	V_DrawString(mx + 90, my + 96,
 	             ((MP_PlayerSetupMenu[2].status & IT_TYPE) == IT_SPACE ? V_TRANSLUCENT : 0)|V_YELLOWMAP|V_ALLOWLOWERCASE,
 	             skins[setupm_fakeskin].realname);
 
+#ifndef __EMSCRIPTEN__
 	// draw the name of the color you have chosen
 	// Just so people don't go thinking that "Default" is Green.
 	V_DrawString(208, 72, V_YELLOWMAP|V_ALLOWLOWERCASE, Color_Names[setupm_fakecolor]);
@@ -6383,6 +6400,7 @@ static void M_DrawSetupMultiPlayerMenu(void)
 	// draw text cursor for name
 	if (!itemOn && skullAnimCounter < 4) // blink cursor
 		V_DrawCharacter(mx + 98 + V_StringWidth(setupm_name, 0), my, '_',false);
+#endif
 
 	// anim the player in the box
 	if (--multi_tics <= 0)
@@ -6466,35 +6484,44 @@ static void M_HandleSetupMultiPlayer(INT32 choice)
 			break;
 
 		case KEY_LEFTARROW:
+#ifndef __EMSCRIPTEN__
 			if (itemOn == 2)       //player skin
+#endif
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakeskin--;
 			}
+#ifndef __EMSCRIPTEN__
 			else if (itemOn == 1) // player color
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakecolor--;
 			}
+#endif
 			break;
 
 		case KEY_RIGHTARROW:
+#ifndef __EMSCRIPTEN__
 			if (itemOn == 2)       //player skin
+#endif
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakeskin++;
 			}
+#ifndef __EMSCRIPTEN__
 			else if (itemOn == 1) // player color
 			{
 				S_StartSound(NULL,sfx_menu1); // Tails
 				setupm_fakecolor++;
 			}
+#endif
 			break;
 
 		case KEY_ESCAPE:
 			exitmenu = true;
 			break;
 
+#ifndef __EMSCRIPTEN__
 		case KEY_BACKSPACE:
 			if ((l = strlen(setupm_name))!=0 && itemOn == 0)
 			{
@@ -6502,6 +6529,7 @@ static void M_HandleSetupMultiPlayer(INT32 choice)
 				setupm_name[l-1] =0;
 			}
 			break;
+#endif
 
 		default:
 			if (choice < 32 || choice > 127 || itemOn != 0)
@@ -6521,6 +6549,10 @@ static void M_HandleSetupMultiPlayer(INT32 choice)
 		setupm_fakeskin = numskins-1;
 	if (setupm_fakeskin > numskins-1)
 		setupm_fakeskin = 0;
+
+#ifdef __EMSCRIPTEN__
+	setupm_fakecolor = skins[setupm_fakeskin].prefcolor;
+#endif
 
 	// check color
 	if (setupm_fakecolor < 1)
@@ -6601,6 +6633,7 @@ static void M_SetupMultiPlayer2(INT32 choice)
 
 static boolean M_QuitMultiPlayerMenu(void)
 {
+#ifndef __EMSCRIPTEN__
 	size_t l;
 	// send name if changed
 	if (strcmp(setupm_name, setupm_cvname->string))
@@ -6611,6 +6644,7 @@ static boolean M_QuitMultiPlayerMenu(void)
 			setupm_name[l] =0;
 		COM_BufAddText (va("%s \"%s\"\n",setupm_cvname->name,setupm_name));
 	}
+#endif
 	// you know what? always putting these in the buffer won't hurt anything.
 	COM_BufAddText (va("%s \"%s\"\n",setupm_cvskin->name,skins[setupm_fakeskin].name));
 	COM_BufAddText (va("%s %d\n",setupm_cvcolor->name,setupm_fakecolor));
