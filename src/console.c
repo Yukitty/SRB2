@@ -679,7 +679,11 @@ boolean CON_Responder(event_t *ev)
 		}
 
 		// escape key toggle off console
+#ifdef __EMSCRIPTEN__
+		if (key == KEY_BACKSPACE || key == KEY_ESCAPE)
+#else
 		if (key == KEY_ESCAPE)
+#endif
 		{
 			consoletoggle = true;
 			return true;

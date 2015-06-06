@@ -2262,7 +2262,11 @@ boolean M_Responder(event_t *ev)
 
 			// Spymode on F12 handled in game logic
 
+#ifdef __EMSCRIPTEN__
+			case KEY_BACKSPACE: // Pop up menu
+#else
 			case KEY_ESCAPE: // Pop up menu
+#endif
 				if (chat_on)
 				{
 					HU_clearChatChars();
@@ -2290,7 +2294,13 @@ boolean M_Responder(event_t *ev)
 	{
 		if (currentMenu->menuitems[itemOn].alphaKey != MM_EVENTHANDLER)
 		{
-			if (ch == ' ' || ch == 'n' || ch == 'y' || ch == KEY_ESCAPE || ch == KEY_ENTER)
+			if (ch == ' ' || ch == 'n' || ch == 'y'
+#ifdef __EMSCRIPTEN__
+				|| ch == KEY_BACKSPACE
+#else
+				|| ch == KEY_ESCAPE
+#endif
+				|| ch == KEY_ENTER)
 			{
 				if (routine)
 					routine(ch);
@@ -2406,7 +2416,11 @@ boolean M_Responder(event_t *ev)
 			}
 			return true;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_BACKSPACE:
+#else
 		case KEY_ESCAPE:
+#endif
 			currentMenu->lastOn = itemOn;
 			if (currentMenu->prevMenu)
 			{
@@ -2433,7 +2447,11 @@ boolean M_Responder(event_t *ev)
 
 			return true;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_DEL:
+#else
 		case KEY_BACKSPACE:
+#endif
 			if ((currentMenu->menuitems[itemOn].status) == IT_CONTROL)
 			{
 				// detach any keys associated with the game control
@@ -3798,6 +3816,9 @@ static void M_HandleImageDef(INT32 choice)
 			else itemOn--;
 			break;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_BACKSPACE:
+#endif
 		case KEY_ESCAPE:
 		case KEY_ENTER:
 			M_ClearMenus(true);
@@ -4425,7 +4446,11 @@ static void M_DrawLoad(void)
 		offset = ((menumovedir > 0) ? -1 : 1);
 	}
 
+#ifdef __EMSCRIPTEN__
+	V_DrawCenteredString(BASEVIDWIDTH/2, 40, 0, "Press del to delete a save.");
+#else
 	V_DrawCenteredString(BASEVIDWIDTH/2, 40, 0, "Press backspace to delete a save.");
+#endif
 
 	for (i = MAXSAVEGAMES + saveSlotSelected - 2 + offset, j = 0;i <= MAXSAVEGAMES + saveSlotSelected + 2 + offset; i++, j++)
 	{
@@ -4702,11 +4727,19 @@ static void M_HandleLoadSave(INT32 choice)
 				M_LoadSelect(saveSlotSelected);
 			break;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_BACKSPACE:
+#else
 		case KEY_ESCAPE:
+#endif
 			exitmenu = true;
 			break;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_DEL:
+#else
 		case KEY_BACKSPACE:
+#endif
 			S_StartSound(NULL, sfx_menu1);
 			// Don't allow people to 'delete' "Play without Saving."
 			// Nor allow people to 'delete' slots with no saves in them.
@@ -5092,7 +5125,11 @@ static void M_HandleLevelStats(INT32 choice)
 			statsLocation -= (statsLocation < 15) ? statsLocation : 15;
 			break;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_BACKSPACE:
+#else
 		case KEY_ESCAPE:
+#endif
 			exitmenu = true;
 			break;
 
@@ -5188,7 +5225,11 @@ static void M_HandleGameStats(INT32 choice)
 
 	switch (choice)
 	{
+#ifdef __EMSCRIPTEN__
+		case KEY_BACKSPACE:
+#else
 		case KEY_ESCAPE:
+#endif
 			exitmenu = true;
 			break;
 
@@ -6517,7 +6558,11 @@ static void M_HandleSetupMultiPlayer(INT32 choice)
 #endif
 			break;
 
+#ifdef __EMSCRIPTEN__
+		case KEY_BACKSPACE:
+#else
 		case KEY_ESCAPE:
+#endif
 			exitmenu = true;
 			break;
 
@@ -6826,7 +6871,11 @@ static void M_DrawControl(void)
 
 	M_CentreText(30,
 		 (setupcontrols_secondaryplayer ? "SET CONTROLS FOR SECONDARY PLAYER" :
+#ifdef __EMSCRIPTEN__
+		                                  "PRESS ENTER TO CHANGE, DEL TO CLEAR"));
+#else
 		                                  "PRESS ENTER TO CHANGE, BACKSPACE TO CLEAR"));
+#endif
 
 	for (i = 0;i < currentMenu->numitems;i++)
 	{
@@ -6867,7 +6916,11 @@ static void M_ChangecontrolResponse(event_t *ev)
 	INT32        ch = ev->data1;
 
 	// ESCAPE cancels
+#ifdef __EMSCRIPTEN__
+	if (ch != KEY_BACKSPACE)
+#else
 	if (ch != KEY_ESCAPE)
+#endif
 	{
 
 		switch (ev->type)
@@ -6937,8 +6990,13 @@ static void M_ChangeControl(INT32 choice)
 	static char tmp[55];
 
 	controltochange = currentMenu->menuitems[choice].alphaKey;
+#ifdef __EMSCRIPTEN__
+	sprintf(tmp, M_GetText("Hit the new key for\n%s\nBACKSPACE to Cancel"),
+		currentMenu->menuitems[choice].text);
+#else
 	sprintf(tmp, M_GetText("Hit the new key for\n%s\nESC for Cancel"),
 		currentMenu->menuitems[choice].text);
+#endif
 
 	M_StartMessage(tmp, M_ChangecontrolResponse, MM_EVENTHANDLER);
 }
