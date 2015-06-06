@@ -17,7 +17,7 @@
 			}
 			#header {padding:5px;text-align:left}
 			div,canvas {padding-right:0;margin-left:auto;margin-right:auto;display:block;text-align:center}
-			canvas {border:0 none;padding:0;background:url(loading.png) #fff}
+			canvas {border:0 none;padding:0;background:#fff}
 			.spinner {
 				height: 50px;
 				width: 50px;
@@ -54,7 +54,7 @@
 	<body>
 		<div id="header"><a href="https://www.srb2.org"><img src="https://www.srb2.org/wp-content/themes/srb2/images/banner.png"></a></div>
 		<div><input type="button" value="Fullscreen" onclick="Module.requestFullScreen(true,false)"></div>
-		<div><canvas id="canvas" oncontextmenu="event.preventDefault()" width="640" height="400"></canvas></div>
+		<div><canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas></div>
 		<figure style="overflow:visible" id="spinner"><div class="spinner"></div></figure>
 		<div id="status">Downloading...</div>
 		<div><progress value="0" max="100" id="progress" hidden=1></progress></div>
@@ -73,17 +73,11 @@
 				printErr: function(text) {
 					text = Array.prototype.slice.call(arguments).join(' ');
 					console.error(text);
+					if (text.substr(0,7) === "Error: ") // I_Error prepends this to its messages.
+						alert(text)
 				},
-				canvas: (function() {
-					var canvas = document.getElementById('canvas');
-
-					// As a default initial behavior, pop up an alert when webgl context is lost. To make your
-					// application robust, you may want to override this behavior before shipping!
-					// See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-					canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
-
-					return canvas;
-				})(),
+				canvas: document.getElementById('canvas'),
+				elementPointerLock: true,
 				setStatus: function(text) {
 					if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
 					if (text === Module.setStatus.text) return;
@@ -118,10 +112,32 @@
 					if (text) Module.printErr('[post-exception status] ' + text);
 				};
 			};
-			if (location.hash) {
-				Module.arguments = location.hash.slice(1).match(/(\S+)/g)
-				Module.arguments.unshift('srb2web')
-			}
+			if (location.hash)
+				// Process hash tag arguments to command line list.
+				(function() {
+					var re = /(\S+)(\s*)/g
+					var cb = /^"(.+)"/
+					var hash = location.hash.substr(1)
+					var find
+					var combo
+					Module.arguments = []
+					while ((find = re.exec(hash)) !== null) {
+						if (combo) {
+							combo += find[0]
+							if (combo.trim().substr(-1) != '"')
+								continue
+							Module.arguments.push(combo.trim().slice(1,-1))
+							combo = null
+							continue
+						}
+						else if (find[1].substr(0,1) == '"') {
+							combo = find[0]
+							continue
+						}
+						Module.arguments.push(find[1])
+					}
+					Module.arguments.unshift('srb2web')
+				})()
 		</script>
 		<script async type="text/javascript" src="srb2.js"></script>
 	</body>
