@@ -350,7 +350,6 @@ HW3SOUND for 3D hardware sound  support
 					<Add option="-DHAVE_SDL" />
 					<Add option="-DHAVE_MIXER" />
 					<Add option="-DNDEBUG" />
-					<Add option="-DCOMPVERSION" />
 					<Add option="-DNOASM" />
 					<Add option="-DNONET" />
 					<Add option="-DNOMD5" />
@@ -914,9 +913,9 @@ HW3SOUND for 3D hardware sound  support
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-W" />
 			<Add option="-Wall" />
 			<Add option="-g" />
+			<Add option="-W" />
 			<Add option="-fno-exceptions" />
 			<Add directory="src" />
 			<Add directory="src/hardware" />
@@ -924,11 +923,6 @@ HW3SOUND for 3D hardware sound  support
 			<Add directory="src/win32" />
 			<Add directory="src/hardware/r_opengl" />
 		</Compiler>
-		<ExtraCommands>
-			<Add before="make -f comptime.mk all-before" />
-			<Add after="make -f cpdebug.mk all-after BIN=$(TARGET_OUTPUT_FILE)" />
-			<Mode after="always" />
-		</ExtraCommands>
 		<Unit filename="comptime.bat" />
 		<Unit filename="comptime.mk" />
 		<Unit filename="comptime.sh" />
