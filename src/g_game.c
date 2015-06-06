@@ -1073,6 +1073,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, INT32 realtics)
 	if (PLAYER1INPUTDOWN(gc_strafeleft))
 		side -= sidemove[speed];
 
+#ifndef __EMSCRIPTEN__
 	if (PLAYER1INPUTDOWN(gc_weaponnext))
 		cmd->buttons |= BT_WEAPONNEXT; // Next Weapon
 	if (PLAYER1INPUTDOWN(gc_weaponprev))
@@ -1089,12 +1090,14 @@ void G_BuildTiccmd(ticcmd_t *cmd, INT32 realtics)
 			cmd->buttons |= (UINT16)(i + 1);
 			break;
 		}
+#endif
 
 	// fire with any button/key
 	axis = JoyAxis(AXISFIRE);
 	if (PLAYER1INPUTDOWN(gc_fire) || (cv_usejoystick.value && axis > 0))
 		cmd->buttons |= BT_ATTACK;
 
+#ifndef __EMSCRIPTEN__
 	// fire normal with any button/key
 	axis = JoyAxis(AXISFIRENORMAL);
 	if (PLAYER1INPUTDOWN(gc_firenormal) || (cv_usejoystick.value && axis > 0))
@@ -1110,6 +1113,7 @@ void G_BuildTiccmd(ticcmd_t *cmd, INT32 realtics)
 		cmd->buttons |= BT_CUSTOM2;
 	if (PLAYER1INPUTDOWN(gc_custom3))
 		cmd->buttons |= BT_CUSTOM3;
+#endif
 
 	// use with any button/key
 	if (PLAYER1INPUTDOWN(gc_use))

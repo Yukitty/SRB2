@@ -621,6 +621,7 @@ static void Got_Saycmd(UINT8 **p, INT32 playernum)
 }
 #endif
 
+#ifndef __EMSCRIPTEN__
 // Handles key input and string input
 //
 static inline boolean HU_keyInChatString(char *s, char ch)
@@ -652,6 +653,7 @@ static inline boolean HU_keyInChatString(char *s, char ch)
 
 	return true; // ate the key
 }
+#endif
 
 //
 //
@@ -757,6 +759,9 @@ void HU_clearChatChars(void)
 //
 boolean HU_Responder(event_t *ev)
 {
+#ifdef __EMSCRIPTEN__
+	(void)ev;
+#else
 	static boolean shiftdown = false;
 	UINT8 c;
 
@@ -812,6 +817,7 @@ boolean HU_Responder(event_t *ev)
 
 		return true;
 	}
+#endif
 	return false;
 }
 

@@ -1163,6 +1163,7 @@ void G_Controldefault(void)
 	gamecontrol[gc_straferight][0] = 'd';
 	gamecontrol[gc_turnleft   ][0] = KEY_LEFTARROW;
 	gamecontrol[gc_turnright  ][0] = KEY_RIGHTARROW;
+#ifndef __EMSCRIPTEN__
 	gamecontrol[gc_weaponnext ][0] = 'e';
 	gamecontrol[gc_weaponprev ][0] = 'q';
 	gamecontrol[gc_wepslot1   ][0] = '1';
@@ -1175,10 +1176,13 @@ void G_Controldefault(void)
 	gamecontrol[gc_wepslot8   ][0] = '8';
 	gamecontrol[gc_wepslot9   ][0] = '9';
 	gamecontrol[gc_wepslot10  ][0] = '0';
+#endif
 	gamecontrol[gc_fire       ][0] = KEY_RCTRL;
 	gamecontrol[gc_fire       ][1] = KEY_MOUSE1+0;
+#ifndef __EMSCRIPTEN__
 	gamecontrol[gc_firenormal ][0] = 'c';
 	gamecontrol[gc_tossflag   ][0] = '\'';
+#endif
 	gamecontrol[gc_use        ][0] = 'x';
 	gamecontrol[gc_camtoggle  ][0] = 'v';
 	gamecontrol[gc_camleft    ][0] = '[';
@@ -1187,8 +1191,10 @@ void G_Controldefault(void)
 	gamecontrol[gc_lookup     ][0] = KEY_PGUP;
 	gamecontrol[gc_lookdown   ][0] = KEY_PGDN;
 	gamecontrol[gc_centerview ][0] = KEY_END;
+#ifndef __EMSCRIPTEN__
 	gamecontrol[gc_talkkey    ][0] = 't';
 	gamecontrol[gc_teamkey    ][0] = 'y';
+#endif
 	gamecontrol[gc_scores     ][0] = KEY_TAB;
 	gamecontrol[gc_jump       ][0] = 'z';
 	gamecontrol[gc_jump       ][1] = KEY_MOUSE1+1;

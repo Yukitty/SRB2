@@ -1057,9 +1057,12 @@ static menuitem_t OP_MoveControlsMenu[] =
 
 static menuitem_t OP_MPControlsMenu[] =
 {
+#ifndef __EMSCRIPTEN__
 	{IT_CALL | IT_STRING2, NULL, "Talk key",         M_ChangeControl, gc_talkkey      },
 	{IT_CALL | IT_STRING2, NULL, "Team-Talk key",    M_ChangeControl, gc_teamkey      },
+#endif
 	{IT_CALL | IT_STRING2, NULL, "Rankings/Scores",  M_ChangeControl, gc_scores       },
+#ifndef __EMSCRIPTEN__
 	{IT_CALL | IT_STRING2, NULL, "Toss Flag",        M_ChangeControl, gc_tossflag     },
 	{IT_CALL | IT_STRING2, NULL, "Next Weapon",      M_ChangeControl, gc_weaponnext   },
 	{IT_CALL | IT_STRING2, NULL, "Prev Weapon",      M_ChangeControl, gc_weaponprev   },
@@ -1070,8 +1073,11 @@ static menuitem_t OP_MPControlsMenu[] =
 	{IT_CALL | IT_STRING2, NULL, "Weapon Slot 5",    M_ChangeControl, gc_wepslot5     },
 	{IT_CALL | IT_STRING2, NULL, "Weapon Slot 6",    M_ChangeControl, gc_wepslot6     },
 	{IT_CALL | IT_STRING2, NULL, "Weapon Slot 7",    M_ChangeControl, gc_wepslot7     },
+#endif
 	{IT_CALL | IT_STRING2, NULL, "Ring Toss",        M_ChangeControl, gc_fire         },
+#ifndef __EMSCRIPTEN__
 	{IT_CALL | IT_STRING2, NULL, "Ring Toss Normal", M_ChangeControl, gc_firenormal   },
+#endif
 };
 
 static menuitem_t OP_CameraControlsMenu[] =
