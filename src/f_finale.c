@@ -911,12 +911,14 @@ boolean F_IntroResponder(event_t *event)
 	// remap virtual keys (mouse & joystick buttons)
 	switch (key)
 	{
+#ifndef __EMSCRIPTEN__
 		case KEY_MOUSE1:
 			key = KEY_ENTER;
 			break;
 		case KEY_MOUSE1 + 1:
 			key = KEY_BACKSPACE;
 			break;
+#endif
 		case KEY_JOY1:
 		case KEY_JOY1 + 2:
 			key = KEY_ENTER;
@@ -1190,12 +1192,14 @@ boolean F_CreditResponder(event_t *event)
 	// remap virtual keys (mouse & joystick buttons)
 	switch (key)
 	{
+#ifndef __EMSCRIPTEN__
 		case KEY_MOUSE1:
 			key = KEY_ENTER;
 			break;
 		case KEY_MOUSE1 + 1:
 			key = KEY_BACKSPACE;
 			break;
+#endif
 		case KEY_JOY1:
 		case KEY_JOY1 + 2:
 			key = KEY_ENTER;
