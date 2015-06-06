@@ -642,7 +642,9 @@ static void P_LoadSectors(lumpnum_t lumpnum)
 		ss->extra_colormap = NULL;
 
 		ss->floor_xoffs = ss->ceiling_xoffs = ss->floor_yoffs = ss->ceiling_yoffs = 0;
+		ss->spawn_flr_xoffs = ss->spawn_ceil_xoffs = ss->spawn_flr_yoffs = ss->spawn_ceil_yoffs = 0;
 		ss->floorpic_angle = ss->ceilingpic_angle = 0;
+		ss->spawn_flrpic_angle = ss->spawn_ceilpic_angle = 0;
 		ss->bottommap = ss->midmap = ss->topmap = -1;
 		ss->gravity = NULL;
 		ss->cullheight = NULL;
@@ -1139,6 +1141,7 @@ static void P_LoadLineDefs(lumpnum_t lumpnum)
 		ld->frontsector = ld->backsector = NULL;
 		ld->validcount = 0;
 		ld->firsttag = ld->nexttag = -1;
+		ld->callcount = 0;
 		// killough 11/98: fix common wad errors (missing sidedefs):
 
 		if (ld->sidenum[0] == 0xffff)
@@ -1380,7 +1383,6 @@ static void P_LoadSideDefs2(lumpnum_t lumpnum)
 						{
 							col = msd->bottomtexture;
 
-
 							sec->extra_colormap->fadergba =
 								(HEX2INT(col[1]) << 4) + (HEX2INT(col[2]) << 0) +
 								(HEX2INT(col[3]) << 12) + (HEX2INT(col[4]) << 8) +
@@ -1393,7 +1395,7 @@ static void P_LoadSideDefs2(lumpnum_t lumpnum)
 								sec->extra_colormap->fadergba += (25 << 24);
 						}
 						else
-							sec->extra_colormap->fadergba = 0x19000000;
+							sec->extra_colormap->fadergba = 0x19000000; // default alpha, (25 << 24)
 #undef ALPHA2INT
 #undef HEX2INT
 					}
@@ -1500,22 +1502,26 @@ static void P_LoadSideDefs2(lumpnum_t lumpnum)
 
 static boolean LineInBlock(fixed_t cx1, fixed_t cy1, fixed_t cx2, fixed_t cy2, fixed_t bx1, fixed_t by1)
 {
-	fixed_t bx2 = bx1 + MAPBLOCKUNITS;
-	fixed_t by2 = by1 + MAPBLOCKUNITS;
-	line_t boxline, testline;
-	vertex_t vbox, vtest;
+	fixed_t bbox[4];
+	line_t testline;
+	vertex_t vtest;
+
+	bbox[BOXRIGHT] = bx1 + MAPBLOCKUNITS;
+	bbox[BOXTOP] = by1 + MAPBLOCKUNITS;
+	bbox[BOXLEFT] = bx1;
+	bbox[BOXBOTTOM] = by1;
 
 	// Trivial rejection
-	if (cx1 < bx1 && cx2 < bx1)
+	if (cx1 < bbox[BOXLEFT] && cx2 < bbox[BOXLEFT])
 		return false;
 
-	if (cx1 > bx2 && cx2 > bx2)
+	if (cx1 > bbox[BOXRIGHT] && cx2 > bbox[BOXRIGHT])
 		return false;
 
-	if (cy1 < by1 && cy2 < by1)
+	if (cy1 < bbox[BOXBOTTOM] && cy2 < bbox[BOXBOTTOM])
 		return false;
 
-	if (cy1 > by2 && cy2 > by2)
+	if (cy1 > bbox[BOXTOP] && cy2 > bbox[BOXTOP])
 		return false;
 
 	// Rats, guess we gotta check
@@ -1525,12 +1531,11 @@ static boolean LineInBlock(fixed_t cx1, fixed_t cy1, fixed_t cx2, fixed_t cy2, f
 	cy1 <<= FRACBITS;
 	cx2 <<= FRACBITS;
 	cy2 <<= FRACBITS;
-	bx1 <<= FRACBITS;
-	by1 <<= FRACBITS;
-	bx2 <<= FRACBITS;
-	by2 <<= FRACBITS;
+	bbox[BOXTOP] <<= FRACBITS;
+	bbox[BOXBOTTOM] <<= FRACBITS;
+	bbox[BOXLEFT] <<= FRACBITS;
+	bbox[BOXRIGHT] <<= FRACBITS;
 
-	boxline.v1 = &vbox;
 	testline.v1 = &vtest;
 
 	testline.v1->x = cx1;
@@ -1538,47 +1543,12 @@ static boolean LineInBlock(fixed_t cx1, fixed_t cy1, fixed_t cx2, fixed_t cy2, f
 	testline.dx = cx2 - cx1;
 	testline.dy = cy2 - cy1;
 
-	// Test line against bottom edge of box
-	boxline.v1->x = bx1;
-	boxline.v1->y = by1;
-	boxline.dx = bx2 - bx1;
-	boxline.dy = 0;
+	if ((testline.dx > 0) ^ (testline.dy > 0))
+		testline.slopetype = ST_NEGATIVE;
+	else
+		testline.slopetype = ST_POSITIVE;
 
-	if (P_PointOnLineSide(cx1, cy1, &boxline) != P_PointOnLineSide(cx2, cy2, &boxline)
-		&& P_PointOnLineSide(boxline.v1->x, boxline.v1->y, &testline) != P_PointOnLineSide(boxline.v1->x+boxline.dx, boxline.v1->y+boxline.dy, &testline))
-		return true;
-
-	// Right edge of box
-	boxline.v1->x = bx2;
-	boxline.v1->y = by1;
-	boxline.dx = 0;
-	boxline.dy = by2-by1;
-
-	if (P_PointOnLineSide(cx1, cy1, &boxline) != P_PointOnLineSide(cx2, cy2, &boxline)
-		&& P_PointOnLineSide(boxline.v1->x, boxline.v1->y, &testline) != P_PointOnLineSide(boxline.v1->x+boxline.dx, boxline.v1->y+boxline.dy, &testline))
-		return true;
-
-	// Top edge of box
-	boxline.v1->x = bx1;
-	boxline.v1->y = by2;
-	boxline.dx = bx2 - bx1;
-	boxline.dy = 0;
-
-	if (P_PointOnLineSide(cx1, cy1, &boxline) != P_PointOnLineSide(cx2, cy2, &boxline)
-		&& P_PointOnLineSide(boxline.v1->x, boxline.v1->y, &testline) != P_PointOnLineSide(boxline.v1->x+boxline.dx, boxline.v1->y+boxline.dy, &testline))
-		return true;
-
-	// Left edge of box
-	boxline.v1->x = bx1;
-	boxline.v1->y = by1;
-	boxline.dx = 0;
-	boxline.dy = by2-by1;
-
-	if (P_PointOnLineSide(cx1, cy1, &boxline) != P_PointOnLineSide(cx2, cy2, &boxline)
-		&& P_PointOnLineSide(boxline.v1->x, boxline.v1->y, &testline) != P_PointOnLineSide(boxline.v1->x+boxline.dx, boxline.v1->y+boxline.dy, &testline))
-		return true;
-
-	return false;
+	return P_BoxOnLineSide(bbox, &testline) == -1;
 }
 
 //
@@ -2341,6 +2311,35 @@ static void P_LoadRecordGhosts(void)
 	free(gpath);
 }
 
+static void P_LoadNightsGhosts(void)
+{
+	const size_t glen = strlen(srb2home)+1+strlen("replay")+1+strlen(timeattackfolder)+1+strlen("MAPXX")+1;
+	char *gpath = malloc(glen);
+
+	if (!gpath)
+		return;
+
+	sprintf(gpath,"%s"PATHSEP"replay"PATHSEP"%s"PATHSEP"%s", srb2home, timeattackfolder, G_BuildMapName(gamemap));
+
+	// Best Score ghost
+	if (cv_ghost_bestscore.value && FIL_FileExists(va("%s-score-best.lmp", gpath)))
+			G_AddGhost(va("%s-score-best.lmp", gpath));
+
+	// Best Time ghost
+	if (cv_ghost_besttime.value && FIL_FileExists(va("%s-time-best.lmp", gpath)))
+			G_AddGhost(va("%s-time-best.lmp", gpath));
+
+	// Last ghost
+	if (cv_ghost_last.value && FIL_FileExists(va("%s-last.lmp", gpath)))
+		G_AddGhost(va("%s-last.lmp", gpath));
+
+	// Guest ghost
+	if (cv_ghost_guest.value && FIL_FileExists(va("%s-guest.lmp", gpath)))
+		G_AddGhost(va("%s-guest.lmp", gpath));
+
+	free(gpath);
+}
+
 /** Loads a level from a lump or external wad.
   *
   * \param skipprecip If true, don't spawn precipitation.
@@ -2404,11 +2403,8 @@ boolean P_SetupLevel(boolean skipprecip)
 
 	// chasecam on in chaos, race, coop
 	// chasecam off in match, tag, capture the flag
-	chase = (gametype == GT_RACE || gametype == GT_COMPETITION || gametype == GT_COOP
-#ifdef CHAOSISNOTDEADYET
-		|| gametype == GT_CHAOS
-#endif
-		) || (maptol & TOL_2D);
+	chase = (gametype == GT_RACE || gametype == GT_COMPETITION || gametype == GT_COOP)
+		|| (maptol & TOL_2D);
 
 	if (!dedicated)
 	{
@@ -2602,6 +2598,8 @@ boolean P_SetupLevel(boolean skipprecip)
 
 	if (modeattacking == ATTACKING_RECORD && !demoplayback)
 		P_LoadRecordGhosts();
+	else if (modeattacking == ATTACKING_NIGHTS && !demoplayback)
+		P_LoadNightsGhosts();
 
 	if (G_TagGametype())
 	{
@@ -2750,7 +2748,6 @@ boolean P_SetupLevel(boolean skipprecip)
 		R_PrecacheLevel();
 
 	nextmapoverride = 0;
-	nextmapgametype = -1;
 	skipstats = false;
 
 	if (!(netgame || multiplayer) && (!modifiedgame || savemoddata))

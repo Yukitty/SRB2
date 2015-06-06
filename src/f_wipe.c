@@ -172,15 +172,6 @@ static fademask_t *F_GetFadeMask(UINT8 masknum, UINT8 scrnnum) {
   */
 static void F_DoWipe(fademask_t *fademask)
 {
-#ifdef HWRENDER
-	/// \todo Mask wipes for OpenGL
-	if(rendermode != render_soft)
-	{
-		HWR_DoScreenWipe();
-		return;
-	}
-#endif
-
 	// Software mask wipe -- optimized; though it might not look like it!
 	// Okay, to save you wondering *how* this is more optimized than the simpler
 	// version that came before it...
@@ -219,8 +210,8 @@ static void F_DoWipe(fademask_t *fademask)
 		UINT32 draw_linestogo, draw_rowstogo;
 
 		// rectangle coordinates, etc.
-		UINT16 scrxpos[fademask->width  + 1];
-		UINT16 scrypos[fademask->height + 1];
+		UINT16* scrxpos = (UINT16*)malloc((fademask->width + 1)  * sizeof(UINT16));
+		UINT16* scrypos = (UINT16*)malloc((fademask->height + 1) * sizeof(UINT16));
 		UINT16 maskx, masky;
 		UINT32 relativepos;
 
@@ -272,6 +263,9 @@ static void F_DoWipe(fademask_t *fademask)
 			if (++maskx >= fademask->width)
 				++masky, maskx = 0;
 		} while (++mask < maskend);
+
+		free(scrxpos);
+		free(scrypos);
 	}
 }
 #endif
@@ -344,6 +338,11 @@ void F_RunWipe(UINT8 wipetype, boolean drawMenu)
 			I_Sleep();
 		lastwipetic = nowtime;
 
+#ifdef HWRENDER
+		if (rendermode == render_opengl)
+			HWR_DoWipe(wipetype, wipeframe-1); // send in the wipe type and wipeframe because we need to cache the graphic
+		else
+#endif
 		F_DoWipe(fmask);
 		I_OsPolling();
 		I_UpdateNoBlit();

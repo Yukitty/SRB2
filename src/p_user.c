@@ -160,15 +160,17 @@ fixed_t P_ReturnThrustY(mobj_t *mo, angle_t angle, fixed_t move)
 	return FixedMul(move, FINESINE(angle));
 }
 
-boolean P_MenuActivePause(void)
+//
+// P_AutoPause
+// Returns true when gameplay should be halted even if the game isn't necessarily paused.
+//
+boolean P_AutoPause(void)
 {
-	if (netgame || !menuactive)
+	// Don't pause even on menu-up or focus-lost in netgames or record attack
+	if (netgame || modeattacking)
 		return false;
 
-	if (modeattacking)
-		return false;
-
-	return true;
+	return (menuactive || window_notinfocus);
 }
 
 //
@@ -328,14 +330,10 @@ void P_GiveEmerald(boolean spawnObj)
 //
 // P_ResetScore
 //
-// This is called when your chain is reset. If in
-// Chaos mode, it displays what chain you got.
+// This is called when your chain is reset.
 void P_ResetScore(player_t *player)
 {
-#ifdef CHAOSISNOTDEADYET
-	if (gametype == GT_CHAOS && player->scoreadd >= 5)
-		CONS_Printf(M_GetText("%s got a chain of %u!\n"), player_names[player-players], player->scoreadd);
-#endif
+	// Formally a host for Chaos mode behavior
 
 	player->scoreadd = 0;
 }
@@ -660,6 +658,7 @@ void P_NightserizePlayer(player_t *player, INT32 nighttime)
 		player->mo->tracer->destscale = player->mo->scale;
 		P_SetScale(player->mo->tracer, player->mo->scale);
 		player->mo->tracer->eflags = (player->mo->tracer->eflags & ~MFE_VERTICALFLIP)|(player->mo->eflags & MFE_VERTICALFLIP);
+		player->mo->height = player->mo->tracer->height;
 	}
 
 	player->pflags &= ~(PF_USEDOWN|PF_JUMPDOWN|PF_ATTACKDOWN|PF_STARTDASH|PF_GLIDING|PF_JUMPED|PF_THOKKED|PF_SPINNING|PF_DRILLING);
@@ -973,9 +972,7 @@ void P_DoSuperTransformation(player_t *player, boolean giverings)
 	// Transformation animation
 	P_SetPlayerMobjState(player->mo, S_PLAY_SUPERTRANS1);
 
-	player->mo->momx >>= 1;
-	player->mo->momy >>= 1;
-	player->mo->momz >>= 1;
+	player->mo->momx = player->mo->momy = player->mo->momz = 0;
 
 	if (giverings)
 	{
@@ -2541,6 +2538,7 @@ static void P_DoClimbing(player_t *player)
 			thinker_t *think;
 			scroll_t *scroller;
 			angle_t sideangle;
+			fixed_t dx, dy;
 
 			for (think = thinkercap.next; think != &thinkercap; think = think->next)
 			{
@@ -2555,14 +2553,25 @@ static void P_DoClimbing(player_t *player)
 				if (scroller->affectee != player->lastsidehit)
 					continue;
 
+				if (scroller->accel)
+				{
+					dx = scroller->vdx;
+					dy = scroller->vdy;
+				}
+				else
+				{
+					dx = scroller->dx;
+					dy = scroller->dy;
+				}
+
 				if (cmd->forwardmove != 0)
 				{
-					player->mo->momz += scroller->dy;
+					player->mo->momz += dy;
 					climb = true;
 				}
 				else
 				{
-					player->mo->momz = scroller->dy;
+					player->mo->momz = dy;
 					climb = false;
 				}
 
@@ -2570,12 +2579,12 @@ static void P_DoClimbing(player_t *player)
 
 				if (cmd->sidemove != 0)
 				{
-					P_Thrust(player->mo, sideangle, scroller->dx);
+					P_Thrust(player->mo, sideangle, dx);
 					climb = true;
 				}
 				else
 				{
-					P_InstaThrust(player->mo, sideangle, scroller->dx);
+					P_InstaThrust(player->mo, sideangle, dx);
 					climb = false;
 				}
 			}
@@ -2651,6 +2660,125 @@ static void P_DoClimbing(player_t *player)
 		P_ResetPlayer(player);
 		P_SetPlayerMobjState(player->mo, S_PLAY_STND);
 	}
+}
+
+//
+// PIT_CheckSolidsTeeter
+// AKA: PIT_HacksToStopPlayersTeeteringOnGargoyles
+//
+
+static mobj_t *teeterer; // the player checking for teetering
+static boolean solidteeter; // saves whether the player can teeter on this or not
+static fixed_t highesttop; // highest floor found so far
+// reserved for standing on multiple objects
+static boolean couldteeter;
+static fixed_t teeterxl, teeterxh;
+static fixed_t teeteryl, teeteryh;
+
+static boolean PIT_CheckSolidsTeeter(mobj_t *thing)
+{
+	fixed_t blockdist;
+	fixed_t tiptop = FixedMul(MAXSTEPMOVE, teeterer->scale);
+	fixed_t thingtop = thing->z + thing->height;
+	fixed_t teeterertop = teeterer->z + teeterer->height;
+
+	if (!teeterer || !thing)
+		return true;
+
+	if (!(thing->flags & MF_SOLID))
+		return true;
+
+	if (thing->flags & MF_NOCLIP)
+		return true;
+
+	if (thing == teeterer)
+		return true;
+
+	if (thing->player && cv_tailspickup.value && gametype != GT_HIDEANDSEEK)
+		return true;
+
+	blockdist = teeterer->radius + thing->radius;
+
+	if (abs(thing->x - teeterer->x) >= blockdist || abs(thing->y - teeterer->y) >= blockdist)
+		return true; // didn't hit it
+
+	if (teeterer->eflags & MFE_VERTICALFLIP)
+	{
+		if (thingtop < teeterer->z)
+			return true;
+		if (thing->z > highesttop)
+			return true;
+		highesttop = thing->z;
+		if (thing->z > teeterertop + tiptop)
+		{
+			solidteeter = true;
+			return true;
+		}
+	}
+	else
+	{
+		if (thing->z > teeterertop)
+			return true;
+		if (thingtop < highesttop)
+			return true;
+		highesttop = thingtop;
+		if (thingtop < teeterer->z - tiptop)
+		{
+			solidteeter = true;
+			return true;
+		}
+	}
+
+	// are you standing on this?
+	if ((teeterer->eflags & MFE_VERTICALFLIP && thing->z - FixedMul(FRACUNIT, teeterer->scale) == teeterertop)
+	|| (!(teeterer->eflags & MFE_VERTICALFLIP) && thingtop + FixedMul(FRACUNIT, teeterer->scale) == teeterer->z))
+	{
+		fixed_t teeterdist = thing->radius - FixedMul(5*FRACUNIT, teeterer->scale);
+		// how far are you from the edge?
+		if (abs(teeterer->x - thing->x) > teeterdist || abs(teeterer->y - thing->y) > teeterdist)
+		{
+			if (couldteeter) // player is standing on another object already, see if we can stand on both and not teeter!
+			{
+				if (thing->x - teeterdist < teeterxl)
+					teeterxl = thing->x - teeterdist;
+				if (thing->x + teeterdist > teeterxh)
+					teeterxh = thing->x + teeterdist;
+				if (thing->y - teeterdist < teeteryl)
+					teeteryl = thing->y - teeterdist;
+				if (thing->y + teeterdist > teeteryh)
+					teeteryh = thing->y + teeterdist;
+
+				if (teeterer->x < teeterxl)
+					return true;
+				if (teeterer->x > teeterxh)
+					return true;
+				if (teeterer->y < teeteryl)
+					return true;
+				if (teeterer->y > teeteryh)
+					return true;
+
+				solidteeter = false; // you can stop teetering now!
+				couldteeter = false; // just in case...
+				return false;
+			}
+			else
+			{
+				// too far! don't change teeter status though
+				// save teeter x/y limits to bring up later
+				teeterxl = thing->x - teeterdist;
+				teeterxh = thing->x + teeterdist;
+				teeteryl = thing->y - teeterdist;
+				teeteryh = thing->y + teeterdist;
+			}
+			couldteeter = true;
+			return true;
+		}
+		solidteeter = false;
+		couldteeter = false;
+		return false; // you're definitely not teetering, that's the end of the matter
+	}
+	solidteeter = false;
+	return true; // you're not teetering but it's not neccessarily over, YET
 }
 
 //
@@ -2827,17 +2955,17 @@ static void P_DoTeeter(player_t *player)
 		}
 	}
 
-#ifdef POLYOBJECTS
-	// Polyobjects
 	{
 		INT32 bx, by, xl, xh, yl, yh;
-
-		validcount++;
 
 		yh = (unsigned)(player->mo->y + player->mo->radius - bmaporgy)>>MAPBLOCKSHIFT;
 		yl = (unsigned)(player->mo->y - player->mo->radius - bmaporgy)>>MAPBLOCKSHIFT;
 		xh = (unsigned)(player->mo->x + player->mo->radius - bmaporgx)>>MAPBLOCKSHIFT;
 		xl = (unsigned)(player->mo->x - player->mo->radius - bmaporgx)>>MAPBLOCKSHIFT;
+
+	// Polyobjects
+#ifdef POLYOBJECTS
+		validcount++;
 
 		for (by = yl; by <= yh; by++)
 			for (bx = xl; bx <= xh; bx++)
@@ -2899,16 +3027,12 @@ static void P_DoTeeter(player_t *player)
 							}
 
 							if (polybottom > player->mo->z + player->mo->height + tiptop
-									|| (polybottom < player->mo->z
-									&& player->mo->z + player->mo->height < player->mo->ceilingz - tiptop))
-							{
+							|| (polybottom < player->mo->z
+							&& player->mo->z + player->mo->height < player->mo->ceilingz - tiptop))
 								teeter = true;
-								roverfloor = true;
-							}
 							else
 							{
 								teeter = false;
-								roverfloor = true;
 								break;
 							}
 						}
@@ -2921,16 +3045,12 @@ static void P_DoTeeter(player_t *player)
 							}
 
 							if (polytop < player->mo->z - tiptop
-									|| (polytop > player->mo->z + player->mo->height
-									&& player->mo->z > player->mo->floorz + tiptop))
-							{
+							|| (polytop > player->mo->z + player->mo->height
+							&& player->mo->z > player->mo->floorz + tiptop))
 								teeter = true;
-								roverfloor = true;
-							}
 							else
 							{
 								teeter = false;
-								roverfloor = true;
 								break;
 							}
 						}
@@ -2938,8 +3058,27 @@ static void P_DoTeeter(player_t *player)
 					plink = (polymaplink_t *)(plink->link.next);
 				}
 			}
-	}
 #endif
+		if (teeter) // only bother with objects as a last resort if you were already teetering
+		{
+			mobj_t *oldtmthing = tmthing;
+			tmthing = teeterer = player->mo;
+			teeterxl = teeterxh = player->mo->x;
+			teeteryl = teeteryh = player->mo->y;
+			couldteeter = false;
+			solidteeter = teeter;
+			for (by = yl; by <= yh; by++)
+				for (bx = xl; bx <= xh; bx++)
+				{
+					highesttop = INT32_MIN;
+					if (!P_BlockThingsIterator(bx, by, PIT_CheckSolidsTeeter))
+						goto teeterdone; // we've found something that stops us teetering at all, how about we stop already
+				}
+teeterdone:
+			teeter = solidteeter;
+			tmthing = oldtmthing; // restore old tmthing, goodness knows what the game does with this before mobj thinkers
+		}
+	}
 	if (teeter)
 	{
 		if ((player->mo->state == &states[S_PLAY_STND] || player->mo->state == &states[S_PLAY_TAP1] || player->mo->state == &states[S_PLAY_TAP2] || player->mo->state == &states[S_PLAY_SUPERSTAND]))
@@ -3998,10 +4137,7 @@ static void P_DoJumpStuff(player_t *player, ticcmd_t *cmd)
 
 static boolean P_AnalogMove(player_t *player)
 {
-	if (netgame)
-		return false;
-	return ((player == &players[consoleplayer] && cv_analog.value)
-		|| (player == &players[secondarydisplayplayer] && cv_analog2.value));
+	return player->pflags & PF_ANALOGMODE;
 }
 
 //
@@ -4124,7 +4260,11 @@ static void P_2dMovement(player_t *player)
 	}
 	else if (player->onconveyor == 4 && !P_IsObjectOnGround(player->mo)) // Actual conveyor belt
 		player->cmomx = player->cmomy = 0;
-	else if (player->onconveyor != 2 && player->onconveyor != 4)
+	else if (player->onconveyor != 2 && player->onconveyor != 4
+#ifdef POLYOBJECTS
+				&& player->onconveyor != 1
+#endif
+	)
 		player->cmomx = player->cmomy = 0;
 
 	player->rmomx = player->mo->momx - player->cmomx;
@@ -4264,22 +4404,16 @@ static void P_3dMovement(player_t *player)
 	fixed_t movepushforward = 0, movepushside = 0;
 	INT32 mforward = 0, mbackward = 0;
 	angle_t dangle; // replaces old quadrants bits
-	camera_t *thiscam;
 	fixed_t normalspd = FixedMul(player->normalspeed, player->mo->scale);
 	boolean analogmove = false;
 #ifndef OLD_MOVEMENT_CODE
 	fixed_t oldMagnitude, newMagnitude;
 
 	// Get the old momentum; this will be needed at the end of the function! -SH
-	oldMagnitude = R_PointToDist2(player->mo->momx, player->mo->momy, 0, 0);
+	oldMagnitude = R_PointToDist2(player->mo->momx - player->cmomx, player->mo->momy - player->cmomy, 0, 0);
 #endif
 
-	if (splitscreen && player == &players[secondarydisplayplayer])
-		thiscam = &camera2;
-	else
-		thiscam = &camera;
-
-	analogmove = (P_AnalogMove(player) && thiscam->chase);
+	analogmove = P_AnalogMove(player);
 
 	cmd = &player->cmd;
 
@@ -4306,16 +4440,13 @@ static void P_3dMovement(player_t *player)
 
 	if (analogmove)
 	{
-		if (player->awayviewtics)
-			movepushangle = player->awayviewmobj->angle;
-		else
-			movepushangle = thiscam->angle;
+		movepushangle = (cmd->angleturn<<16 /* not FRACBITS */);
 	}
 	else
 	{
 		movepushangle = player->mo->angle;
 	}
-		movepushsideangle = movepushangle-ANGLE_90;
+	movepushsideangle = movepushangle-ANGLE_90;
 
 	// cmomx/cmomy stands for the conveyor belt speed.
 	if (player->onconveyor == 2) // Wind/Current
@@ -4326,7 +4457,11 @@ static void P_3dMovement(player_t *player)
 	}
 	else if (player->onconveyor == 4 && !P_IsObjectOnGround(player->mo)) // Actual conveyor belt
 		player->cmomx = player->cmomy = 0;
-	else if (player->onconveyor != 2 && player->onconveyor != 4)
+	else if (player->onconveyor != 2 && player->onconveyor != 4
+#ifdef POLYOBJECTS
+				&& player->onconveyor != 1
+#endif
+	)
 		player->cmomx = player->cmomy = 0;
 
 	player->rmomx = player->mo->momx - player->cmomx;
@@ -4482,8 +4617,6 @@ static void P_3dMovement(player_t *player)
 		if (!(player->pflags & PF_GLIDING || player->exiting || P_PlayerInPain(player)))
 		{
 			angle_t controldirection;
-			fixed_t tempx = 0, tempy = 0;
-			angle_t tempangle;
 #ifdef OLD_MOVEMENT_CODE
 			angle_t controlplayerdirection;
 			boolean cforward; // controls pointing forward from the player
@@ -4494,17 +4627,8 @@ static void P_3dMovement(player_t *player)
 #endif
 			// Calculate the angle at which the controls are pointing
 			// to figure out the proper mforward and mbackward.
-			tempangle = movepushangle;
-			tempangle >>= ANGLETOFINESHIFT;
-			tempx += FixedMul(cmd->forwardmove*FRACUNIT,FINECOSINE(tempangle));
-			tempy += FixedMul(cmd->forwardmove*FRACUNIT,FINESINE(tempangle));
-
-			tempangle = movepushsideangle;
-			tempangle >>= ANGLETOFINESHIFT;
-			tempx += FixedMul(cmd->sidemove*FRACUNIT,FINECOSINE(tempangle));
-			tempy += FixedMul(cmd->sidemove*FRACUNIT,FINESINE(tempangle));
-
-			controldirection = R_PointToAngle2(0, 0, tempx, tempy);
+			// (Why was it so complicated before? ~Red)
+			controldirection = R_PointToAngle2(0, 0, cmd->forwardmove*FRACUNIT, -cmd->sidemove*FRACUNIT)+movepushangle;
 
 #ifdef OLD_MOVEMENT_CODE
 			controlplayerdirection = player->mo->angle;
@@ -4624,22 +4748,27 @@ static void P_3dMovement(player_t *player)
 	// If "no" to 2, normalize to topspeed, so we can't suddenly run faster than it of our own accord.
 	// If "no" to 1, we're not reaching any limits yet, so ignore this entirely!
 	// -Shadow Hog
-	newMagnitude = R_PointToDist2(player->mo->momx, player->mo->momy, 0, 0);
+	newMagnitude = R_PointToDist2(player->mo->momx - player->cmomx, player->mo->momy - player->cmomy, 0, 0);
 	if (newMagnitude > topspeed)
 	{
+		fixed_t tempmomx, tempmomy;
 		if (oldMagnitude > topspeed)
 		{
 			if (newMagnitude > oldMagnitude)
 			{
-				player->mo->momx = FixedMul(FixedDiv(player->mo->momx, newMagnitude), oldMagnitude);
-				player->mo->momy = FixedMul(FixedDiv(player->mo->momy, newMagnitude), oldMagnitude);
+				tempmomx = FixedMul(FixedDiv(player->mo->momx - player->cmomx, newMagnitude), oldMagnitude);
+				tempmomy = FixedMul(FixedDiv(player->mo->momy - player->cmomy, newMagnitude), oldMagnitude);
+				player->mo->momx = tempmomx + player->cmomx;
+				player->mo->momy = tempmomy + player->cmomy;
 			}
 			// else do nothing
 		}
 		else
 		{
-			player->mo->momx = FixedMul(FixedDiv(player->mo->momx, newMagnitude), topspeed);
-			player->mo->momy = FixedMul(FixedDiv(player->mo->momy, newMagnitude), topspeed);
+			tempmomx = FixedMul(FixedDiv(player->mo->momx - player->cmomx, newMagnitude), topspeed);
+			tempmomy = FixedMul(FixedDiv(player->mo->momy - player->cmomy, newMagnitude), topspeed);
+			player->mo->momx = tempmomx + player->cmomx;
+			player->mo->momy = tempmomy + player->cmomy;
 		}
 	}
 #endif
@@ -6060,6 +6189,7 @@ static void P_SkidStuff(player_t *player)
 			particle->eflags |= player->mo->eflags & MFE_VERTICALFLIP;
 			P_SetScale(particle, player->mo->scale >> 2);
 			particle->destscale = player->mo->scale << 2;
+			particle->scalespeed = FixedMul(particle->scalespeed, player->mo->scale); // scale the scaling speed!
 			P_SetObjectMomZ(particle, FRACUNIT, false);
 			S_StartSound(player->mo, sfx_s3k7e); // the proper "Knuckles eats dirt" sfx.
 		}
@@ -6080,6 +6210,7 @@ static void P_SkidStuff(player_t *player)
 				particle->eflags |= player->mo->eflags & MFE_VERTICALFLIP;
 				P_SetScale(particle, player->mo->scale >> 2);
 				particle->destscale = player->mo->scale << 2;
+				particle->scalespeed = FixedMul(particle->scalespeed, player->mo->scale); // scale the scaling speed!
 				P_SetObjectMomZ(particle, FRACUNIT, false);
 			}
 		}
@@ -6120,16 +6251,10 @@ static void P_MovePlayer(player_t *player)
 	ticcmd_t *cmd;
 	INT32 i;
 
-	camera_t *thiscam;
 	fixed_t runspd;
 
 	if (countdowntimeup)
 		return;
-
-	if (splitscreen && player == &players[secondarydisplayplayer])
-		thiscam = &camera2;
-	else
-		thiscam = &camera;
 
 	if (player->mo->state >= &states[S_PLAY_SUPERTRANS1] && player->mo->state <= &states[S_PLAY_SUPERTRANS9])
 	{
@@ -6256,7 +6381,7 @@ static void P_MovePlayer(player_t *player)
 		P_2dMovement(player);
 	else
 	{
-		if (!player->climbing && (!P_AnalogMove(player) || player->pflags & PF_SPINNING))
+		if (!player->climbing && (!P_AnalogMove(player)))
 			player->mo->angle = (cmd->angleturn<<16 /* not FRACBITS */);
 
 		ticruned++;
@@ -6572,31 +6697,45 @@ static void P_MovePlayer(player_t *player)
 	//////////////////
 
 	// This really looks like it should be moved to P_3dMovement. -Red
-	if (P_AnalogMove(player) && thiscam->chase
+	if (P_AnalogMove(player)
 		&& (cmd->forwardmove != 0 || cmd->sidemove != 0) && !player->climbing && !twodlevel && !(player->mo->flags2 & MF2_TWOD))
 	{
 		// If travelling slow enough, face the way the controls
 		// point and not your direction of movement.
 		if (player->speed < FixedMul(5*FRACUNIT, player->mo->scale) || player->pflags & PF_GLIDING || !onground)
 		{
-			fixed_t tempx = 0, tempy = 0;
 			angle_t tempangle;
 
-			if (player->awayviewtics)
-				tempangle = player->awayviewmobj->angle;
-			else
-				tempangle = thiscam->angle;
-			tempangle >>= ANGLETOFINESHIFT;
-			tempx += FixedMul(cmd->forwardmove*FRACUNIT,FINECOSINE(tempangle));
-			tempy += FixedMul(cmd->forwardmove*FRACUNIT,FINESINE(tempangle));
+			tempangle = (cmd->angleturn << 16);
 
-			tempangle <<= ANGLETOFINESHIFT;
-			tempangle -= ANGLE_90;
-			tempangle >>= ANGLETOFINESHIFT;
-			tempx += FixedMul(cmd->sidemove*FRACUNIT,FINECOSINE(tempangle));
-			tempy += FixedMul(cmd->sidemove*FRACUNIT,FINESINE(tempangle));
+#ifdef REDSANALOG // Ease to it. Chillax. ~Red
+			tempangle += R_PointToAngle2(0, 0, cmd->forwardmove*FRACUNIT, -cmd->sidemove*FRACUNIT);
+			{
+				fixed_t tweenvalue = max(abs(cmd->forwardmove), abs(cmd->sidemove));
 
-			player->mo->angle = R_PointToAngle2(0, 0, tempx, tempy);
+				if (tweenvalue < 10 && (cmd->buttons & (BT_CAMLEFT|BT_CAMRIGHT)) == (BT_CAMLEFT|BT_CAMRIGHT)) {
+					tempangle = (cmd->angleturn << 16);
+					tweenvalue = 16;
+				}
+
+				tweenvalue *= tweenvalue*tweenvalue*1536;
+
+				//if (player->pflags & PF_GLIDING)
+					//tweenvalue >>= 1;
+
+				tempangle -= player->mo->angle;
+
+				if (tempangle < ANGLE_180 && tempangle > tweenvalue)
+					player->mo->angle += tweenvalue;
+				else if (tempangle >= ANGLE_180 && InvAngle(tempangle) > tweenvalue)
+					player->mo->angle -= tweenvalue;
+				else
+					player->mo->angle += tempangle;
+			}
+#else
+			// Less math this way ~Red
+			player->mo->angle = R_PointToAngle2(0, 0, cmd->forwardmove*FRACUNIT, -cmd->sidemove*FRACUNIT)+tempangle;
+#endif
 		}
 		// Otherwise, face the direction you're travelling.
 		else if (player->panim == PA_WALK || player->panim == PA_RUN || player->panim == PA_ROLL
@@ -7559,19 +7698,20 @@ static void CV_CamRotate2_OnChange(void)
 		CV_SetValue(&cv_cam2_rotate, cv_cam2_rotate.value % 360);
 }
 
+static CV_PossibleValue_t CV_CamSpeed[] = {{0, "MIN"}, {1*FRACUNIT, "MAX"}, {0, NULL}};
 static CV_PossibleValue_t rotation_cons_t[] = {{1, "MIN"}, {45, "MAX"}, {0, NULL}};
 static CV_PossibleValue_t CV_CamRotate[] = {{-720, "MIN"}, {720, "MAX"}, {0, NULL}};
 
 consvar_t cv_cam_dist = {"cam_dist", "128", CV_FLOAT, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam_height = {"cam_height", "20", CV_FLOAT, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam_still = {"cam_still", "Off", 0, CV_OnOff, NULL, 0, NULL, NULL, 0, 0, NULL};
-consvar_t cv_cam_speed = {"cam_speed", "0.25", CV_FLOAT, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
+consvar_t cv_cam_speed = {"cam_speed", "0.25", CV_FLOAT, CV_CamSpeed, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam_rotate = {"cam_rotate", "0", CV_CALL|CV_NOINIT, CV_CamRotate, CV_CamRotate_OnChange, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam_rotspeed = {"cam_rotspeed", "10", 0, rotation_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam2_dist = {"cam2_dist", "128", CV_FLOAT, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam2_height = {"cam2_height", "20", CV_FLOAT, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam2_still = {"cam2_still", "Off", 0, CV_OnOff, NULL, 0, NULL, NULL, 0, 0, NULL};
-consvar_t cv_cam2_speed = {"cam2_speed", "0.25", CV_FLOAT, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
+consvar_t cv_cam2_speed = {"cam2_speed", "0.25", CV_FLOAT, CV_CamSpeed, NULL, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam2_rotate = {"cam2_rotate", "0", CV_CALL|CV_NOINIT, CV_CamRotate, CV_CamRotate2_OnChange, 0, NULL, NULL, 0, 0, NULL};
 consvar_t cv_cam2_rotspeed = {"cam2_rotspeed", "10", 0, rotation_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
 
@@ -7724,6 +7864,15 @@ boolean P_MoveChaseCamera(player_t *player, camera_t *thiscam, boolean resetcall
 		camheight = FixedMul(cv_cam2_height.value, mo->scale);
 	}
 
+#ifdef REDSANALOG
+	if (P_AnalogMove(player) && (player->cmd.buttons & (BT_CAMLEFT|BT_CAMRIGHT)) == (BT_CAMLEFT|BT_CAMRIGHT)) {
+		camstill = true;
+
+		if (camspeed < 4*FRACUNIT/5)
+			camspeed = 4*FRACUNIT/5;
+	}
+#endif // REDSANALOG
+
 	if (mo->eflags & MFE_VERTICALFLIP)
 		camheight += thiscam->height;
 
@@ -7772,6 +7921,9 @@ boolean P_MoveChaseCamera(player_t *player, camera_t *thiscam, boolean resetcall
 
 	if (!objectplacing && !(twodlevel || (mo->flags2 & MF2_TWOD)) && !(player->pflags & PF_NIGHTSMODE))
 	{
+#ifdef REDSANALOG
+		if ((player->cmd.buttons & (BT_CAMLEFT|BT_CAMRIGHT)) == (BT_CAMLEFT|BT_CAMRIGHT)); else
+#endif
 		if (player->cmd.buttons & BT_CAMLEFT)
 		{
 			if (thiscam == &camera)
@@ -8569,6 +8721,9 @@ void P_PlayerThink(player_t *player)
 	// check water content, set stuff in mobj
 	P_MobjCheckWater(player->mo);
 
+#ifdef POLYOBJECTS
+	if (player->onconveyor != 1 || !P_IsObjectOnGround(player->mo))
+#endif
 	player->onconveyor = 0;
 	// check special sectors : damage & secrets
 
@@ -8706,6 +8861,11 @@ void P_PlayerThink(player_t *player)
 
 	if (!player->mo)
 		return; // P_MovePlayer removed player->mo.
+
+#ifdef POLYOBJECTS
+	if (player->onconveyor == 1)
+			player->cmomy = player->cmomx = 0;
+#endif
 
 	P_DoSuperStuff(player);
 	P_CheckSneakerAndLivesTimer(player);

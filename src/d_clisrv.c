@@ -823,7 +823,7 @@ static inline void resynch_read_ctf(resynchend_pak *p)
 	{
 		if (!playeringame[p->flagplayer[1]])
 			 I_Error("Invalid blue flag player %d who isn't in the game!", (INT32)p->flagplayer[1]);
-		players[p->flagplayer[1]].gotflag = GF_REDFLAG;
+		players[p->flagplayer[1]].gotflag = GF_BLUEFLAG;
 		if (blueflag)
 		{
 			P_RemoveMobj(blueflag);
@@ -2921,6 +2921,12 @@ static void Got_AddPlayer(UINT8 **p, INT32 playernum)
 			displayplayer = newplayernum;
 			secondarydisplayplayer = newplayernum;
 			DEBFILE("spawning me\n");
+			// Apply player flags as soon as possible!
+			players[newplayernum].pflags &= ~(PF_FLIPCAM|PF_ANALOGMODE);
+			if (cv_flipcam.value)
+				players[newplayernum].pflags |= PF_FLIPCAM;
+			if (cv_analog.value)
+				players[newplayernum].pflags |= PF_ANALOGMODE;
 		}
 		else
 		{
@@ -2928,6 +2934,12 @@ static void Got_AddPlayer(UINT8 **p, INT32 playernum)
 			DEBFILE("spawning my brother\n");
 			if (botingame)
 				players[newplayernum].bot = 1;
+			// Same goes for player 2 when relevant
+			players[newplayernum].pflags &= ~(/*PF_FLIPCAM|*/PF_ANALOGMODE);
+			//if (cv_flipcam2.value)
+				//players[newplayernum].pflags |= PF_FLIPCAM;
+			if (cv_analog2.value)
+				players[newplayernum].pflags |= PF_ANALOGMODE;
 		}
 		D_SendPlayerConfig();
 		addedtogame = true;
