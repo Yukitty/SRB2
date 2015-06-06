@@ -721,7 +721,9 @@ void D_RegisterClientCommands(void)
 
 	// ingame object placing
 	COM_AddCommand("objectplace", Command_ObjectPlace_f);
+#ifndef __EMSCRIPTEN__
 	COM_AddCommand("writethings", Command_Writethings_f);
+#endif
 	CV_RegisterVar(&cv_speed);
 	CV_RegisterVar(&cv_opflags);
 	CV_RegisterVar(&cv_mapthingnum);

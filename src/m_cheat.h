@@ -26,7 +26,9 @@ void cht_Init(void);
 // ObjectPlace
 //
 void Command_ObjectPlace_f(void);
+#ifndef __EMSCRIPTEN__
 void Command_Writethings_f(void);
+#endif
 
 extern consvar_t cv_opflags, cv_mapthingnum, cv_speed;
 //extern consvar_t cv_snapto, cv_grid;

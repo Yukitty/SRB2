@@ -1138,6 +1138,7 @@ void OP_ObjectplaceMovement(player_t *player)
 //
 // Objectplace related commands.
 //
+#ifndef __EMSCRIPTEN__
 void Command_Writethings_f(void)
 {
 	REQUIRE_INLEVEL;
@@ -1146,6 +1147,7 @@ void Command_Writethings_f(void)
 
 	P_WriteThings(W_GetNumForName(G_BuildMapName(gamemap)) + ML_THINGS);
 }
+#endif
 
 void Command_ObjectPlace_f(void)
 {
