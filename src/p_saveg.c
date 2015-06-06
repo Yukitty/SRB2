@@ -143,13 +143,13 @@ static inline void P_NetArchivePlayers(void)
 		WRITEUINT16(save_p, players[i].flashcount);
 
 		WRITEUINT32(save_p, players[i].score);
-		WRITEINT32(save_p, players[i].dashspeed);
+		WRITEFIXED(save_p, players[i].dashspeed);
 		WRITEINT32(save_p, players[i].dashtime);
 		WRITESINT8(save_p, players[i].lives);
 		WRITESINT8(save_p, players[i].continues);
 		WRITESINT8(save_p, players[i].xtralife);
 		WRITEUINT8(save_p, players[i].gotcontinue);
-		WRITEINT32(save_p, players[i].speed);
+		WRITEFIXED(save_p, players[i].speed);
 		WRITEUINT8(save_p, players[i].jumping);
 		WRITEUINT8(save_p, players[i].secondjump);
 		WRITEUINT8(save_p, players[i].fly1);
@@ -172,8 +172,8 @@ static inline void P_NetArchivePlayers(void)
 		/////////////////////
 		// Race Mode Stuff //
 		/////////////////////
-		WRITEINT32(save_p, players[i].numboxes);
-		WRITEINT32(save_p, players[i].totalring);
+		WRITEINT16(save_p, players[i].numboxes);
+		WRITEINT16(save_p, players[i].totalring);
 		WRITEUINT32(save_p, players[i].realtime);
 		WRITEUINT8(save_p, players[i].laps);
 
@@ -211,7 +211,7 @@ static inline void P_NetArchivePlayers(void)
 		WRITEUINT32(save_p, players[i].marebegunat);
 		WRITEUINT32(save_p, players[i].startedtime);
 		WRITEUINT32(save_p, players[i].finishedtime);
-		WRITEUINT16(save_p, players[i].finishedrings);
+		WRITEINT16(save_p, players[i].finishedrings);
 		WRITEUINT32(save_p, players[i].marescore);
 		WRITEUINT32(save_p, players[i].lastmarescore);
 		WRITEUINT8(save_p, players[i].lastmare);
@@ -318,13 +318,13 @@ static inline void P_NetUnArchivePlayers(void)
 		players[i].flashcount = READUINT16(save_p);
 
 		players[i].score = READUINT32(save_p);
-		players[i].dashspeed = READINT32(save_p); // dashing speed
+		players[i].dashspeed = READFIXED(save_p); // dashing speed
 		players[i].dashtime = READINT32(save_p); // dashing speed
 		players[i].lives = READSINT8(save_p);
 		players[i].continues = READSINT8(save_p); // continues that player has acquired
 		players[i].xtralife = READSINT8(save_p); // Ring Extra Life counter
 		players[i].gotcontinue = READUINT8(save_p); // got continue from stage
-		players[i].speed = READINT32(save_p); // Player's speed (distance formula of MOMX and MOMY values)
+		players[i].speed = READFIXED(save_p); // Player's speed (distance formula of MOMX and MOMY values)
 		players[i].jumping = READUINT8(save_p); // Jump counter
 		players[i].secondjump = READUINT8(save_p);
 		players[i].fly1 = READUINT8(save_p); // Tails flying
@@ -347,8 +347,8 @@ static inline void P_NetUnArchivePlayers(void)
 		/////////////////////
 		// Race Mode Stuff //
 		/////////////////////
-		players[i].numboxes = READINT32(save_p); // Number of item boxes obtained for Race Mode
-		players[i].totalring = READINT32(save_p); // Total number of rings obtained for Race Mode
+		players[i].numboxes = READINT16(save_p); // Number of item boxes obtained for Race Mode
+		players[i].totalring = READINT16(save_p); // Total number of rings obtained for Race Mode
 		players[i].realtime = READUINT32(save_p); // integer replacement for leveltime
 		players[i].laps = READUINT8(save_p); // Number of laps (optional)
 
@@ -386,7 +386,7 @@ static inline void P_NetUnArchivePlayers(void)
 		players[i].marebegunat = READUINT32(save_p);
 		players[i].startedtime = READUINT32(save_p);
 		players[i].finishedtime = READUINT32(save_p);
-		players[i].finishedrings = READUINT16(save_p);
+		players[i].finishedrings = READINT16(save_p);
 		players[i].marescore = READUINT32(save_p);
 		players[i].lastmarescore = READUINT32(save_p);
 		players[i].lastmare = READUINT8(save_p);
@@ -447,6 +447,7 @@ static inline void P_NetUnArchivePlayers(void)
 #define SD_LIGHT    0x10
 #define SD_SPECIAL  0x20
 #define SD_DIFF2    0x40
+#define SD_FFLOORS  0x80
 
 // diff2 flags
 #define SD_FXOFFS    0x01
@@ -459,6 +460,7 @@ static inline void P_NetUnArchivePlayers(void)
 
 #define LD_FLAG     0x01
 #define LD_SPECIAL  0x02
+#define LD_CLLCOUNT 0x04
 #define LD_S1TEXOFF 0x08
 #define LD_S1TOPTEX 0x10
 #define LD_S1BOTTEX 0x20
@@ -515,22 +517,36 @@ static void P_NetArchiveWorld(void)
 		if (ss->special != SHORT(ms->special))
 			diff |= SD_SPECIAL;
 
-		/// \todo this makes Flat Alignment (linetype 7) increase the savegame size!
-		if (ss->floor_xoffs != 0)
+		if (ss->floor_xoffs != ss->spawn_flr_xoffs)
 			diff2 |= SD_FXOFFS;
-		if (ss->floor_yoffs != 0)
+		if (ss->floor_yoffs != ss->spawn_flr_yoffs)
 			diff2 |= SD_FYOFFS;
-		if (ss->ceiling_xoffs != 0)
+		if (ss->ceiling_xoffs != ss->spawn_ceil_xoffs)
 			diff2 |= SD_CXOFFS;
-		if (ss->ceiling_yoffs != 0)
+		if (ss->ceiling_yoffs != ss->spawn_ceil_yoffs)
 			diff2 |= SD_CYOFFS;
-		if (ss->floorpic_angle != 0)
+		if (ss->floorpic_angle != ss->spawn_flrpic_angle)
 			diff2 |= SD_FLOORANG;
-		if (ss->ceilingpic_angle != 0)
+		if (ss->ceilingpic_angle != ss->spawn_flrpic_angle)
 			diff2 |= SD_CEILANG;
 
 		if (ss->tag != SHORT(ms->tag))
 			diff2 |= SD_TAG;
+
+		// Check if any of the sector's FOFs differ from how they spawned
+		if (ss->ffloors)
+		{
+			ffloor_t *rover;
+			for (rover = ss->ffloors; rover; rover = rover->next)
+			{
+				if (rover->flags != rover->spawnflags
+				|| rover->alpha != rover->spawnalpha)
+					{
+						diff |= SD_FFLOORS; // we found an FOF that changed!
+						break; // don't bother checking for more, we do that later
+					}
+			}
+		}
 
 		if (diff2)
 			diff |= SD_DIFF2;
@@ -573,6 +589,35 @@ static void P_NetArchiveWorld(void)
 				WRITEANGLE(put, ss->floorpic_angle);
 			if (diff2 & SD_CEILANG)
 				WRITEANGLE(put, ss->ceilingpic_angle);
+
+			// Special case: save the stats of all modified ffloors along with their ffloor "number"s
+			// we don't bother with ffloors that haven't changed, that would just add to savegame even more than is really needed
+			if (diff & SD_FFLOORS)
+			{
+				size_t j = 0; // ss->ffloors is saved as ffloor #0, ss->ffloors->next is #1, etc
+				ffloor_t *rover;
+				UINT8 fflr_diff;
+				for (rover = ss->ffloors; rover; rover = rover->next)
+				{
+					fflr_diff = 0; // reset diff flags
+					if (rover->flags != rover->spawnflags)
+						fflr_diff |= 1;
+					if (rover->alpha != rover->spawnalpha)
+						fflr_diff |= 2;
+
+					if (fflr_diff)
+					{
+						WRITEUINT16(put, j); // save ffloor "number"
+						WRITEUINT8(put, fflr_diff);
+						if (fflr_diff & 1)
+							WRITEUINT16(put, rover->flags);
+						if (fflr_diff & 2)
+							WRITEINT16(put, rover->alpha);
+					}
+					j++;
+				}
+				WRITEUINT16(put, 0xffff);
+			}
 		}
 	}
 
@@ -587,6 +632,9 @@ static void P_NetArchiveWorld(void)
 
 		if (li->special != SHORT(mld->special))
 			diff |= LD_SPECIAL;
+
+		if (mld->special == 321 || mld->special == 322) // only reason li->callcount would be non-zero is if either of these are involved
+			diff |= LD_CLLCOUNT;
 
 		if (li->sidenum[0] != 0xffff)
 		{
@@ -633,6 +681,8 @@ static void P_NetArchiveWorld(void)
 				WRITEINT16(put, li->flags);
 			if (diff & LD_SPECIAL)
 				WRITEINT16(put, li->special);
+			if (diff & LD_CLLCOUNT)
+				WRITEINT16(put, li->callcount);
 
 			si = &sides[li->sidenum[0]];
 			if (diff & LD_S1TEXOFF)
@@ -732,6 +782,46 @@ static void P_NetUnArchiveWorld(void)
 			sectors[i].floorpic_angle  = READANGLE(get);
 		if (diff2 & SD_CEILANG)
 			sectors[i].ceilingpic_angle = READANGLE(get);
+
+		if (diff & SD_FFLOORS)
+		{
+			UINT16 j = 0; // number of current ffloor in loop
+			UINT16 fflr_i; // saved ffloor "number" of next modified ffloor
+			UINT16 fflr_diff; // saved ffloor diff
+			ffloor_t *rover;
+
+			rover = sectors[i].ffloors;
+			if (!rover) // it is assumed sectors[i].ffloors actually exists, but just in case...
+				I_Error("Sector does not have any ffloors!");
+
+			fflr_i = READUINT16(get); // get first modified ffloor's number ready
+			for (;;) // for some reason the usual for (rover = x; ...) thing doesn't work here?
+			{
+				if (fflr_i == 0xffff) // end of modified ffloors list, let's stop already
+					break;
+				// should NEVER need to be checked
+				//if (rover == NULL)
+					//break;
+				if (j != fflr_i) // this ffloor was not modified
+				{
+					j++;
+					rover = rover->next;
+					continue;
+				}
+
+				fflr_diff = READUINT8(get);
+
+				if (fflr_diff & 1)
+					rover->flags = READUINT16(get);
+				if (fflr_diff & 2)
+					rover->alpha = READINT16(get);
+
+				fflr_i = READUINT16(get); // get next ffloor "number" ready
+
+				j++;
+				rover = rover->next;
+			}
+		}
 	}
 
 	for (;;)
@@ -754,6 +844,8 @@ static void P_NetUnArchiveWorld(void)
 			li->flags = READINT16(get);
 		if (diff & LD_SPECIAL)
 			li->special = READINT16(get);
+		if (diff & LD_CLLCOUNT)
+			li->callcount = READINT16(get);
 
 		si = &sides[li->sidenum[0]];
 		if (diff & LD_S1TEXOFF)
@@ -869,6 +961,7 @@ typedef enum
 	tc_polyslidedoor,
 	tc_polyswingdoor,
 	tc_polyflag,
+	tc_polydisplace,
 #endif
 	tc_end
 } specials_e;
@@ -895,6 +988,241 @@ static inline UINT32 SavePlayer(const player_t *player)
 {
 	if (player) return (UINT32)(player - players);
 	return 0xFFFFFFFF;
+}
+
+//
+// SaveMobjThinker
+//
+// Saves a mobj_t thinker
+//
+static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
+{
+	const mobj_t *mobj = (const mobj_t *)th;
+	UINT32 diff;
+	UINT16 diff2;
+
+	// Ignore stationary hoops - these will be respawned from mapthings.
+	if (mobj->type == MT_HOOP)
+		return;
+
+	// These are NEVER saved.
+	if (mobj->type == MT_HOOPCOLLIDE)
+		return;
+
+	// This hoop has already been collected.
+	if (mobj->type == MT_HOOPCENTER && mobj->threshold == 4242)
+		return;
+
+	if (mobj->spawnpoint && mobj->info->doomednum != -1)
+	{
+		// spawnpoint is not modified but we must save it since it is an identifier
+		diff = MD_SPAWNPOINT;
+
+		if ((mobj->x != mobj->spawnpoint->x << FRACBITS) ||
+			(mobj->y != mobj->spawnpoint->y << FRACBITS) ||
+			(mobj->angle != FixedAngle(mobj->spawnpoint->angle*FRACUNIT)))
+			diff |= MD_POS;
+
+		if (mobj->info->doomednum != mobj->spawnpoint->type)
+			diff |= MD_TYPE;
+	}
+	else
+		diff = MD_POS | MD_TYPE; // not a map spawned thing so make it from scratch
+
+	diff2 = 0;
+
+	// not the default but the most probable
+	if (mobj->momx != 0 || mobj->momy != 0 || mobj->momz != 0)
+		diff |= MD_MOM;
+	if (mobj->radius != mobj->info->radius)
+		diff |= MD_RADIUS;
+	if (mobj->height != mobj->info->height)
+		diff |= MD_HEIGHT;
+	if (mobj->flags != mobj->info->flags)
+		diff |= MD_FLAGS;
+	if (mobj->flags2)
+		diff |= MD_FLAGS2;
+	if (mobj->health != mobj->info->spawnhealth)
+		diff |= MD_HEALTH;
+	if (mobj->reactiontime != mobj->info->reactiontime)
+		diff |= MD_RTIME;
+	if ((statenum_t)(mobj->state-states) != mobj->info->spawnstate)
+		diff |= MD_STATE;
+	if (mobj->tics != mobj->state->tics)
+		diff |= MD_TICS;
+	if (mobj->sprite != mobj->state->sprite)
+		diff |= MD_SPRITE;
+	if (mobj->frame != mobj->state->frame)
+		diff |= MD_FRAME;
+	if (mobj->eflags)
+		diff |= MD_EFLAGS;
+	if (mobj->player)
+		diff |= MD_PLAYER;
+
+	if (mobj->movedir)
+		diff |= MD_MOVEDIR;
+	if (mobj->movecount)
+		diff |= MD_MOVECOUNT;
+	if (mobj->threshold)
+		diff |= MD_THRESHOLD;
+	if (mobj->lastlook != -1)
+		diff |= MD_LASTLOOK;
+	if (mobj->target)
+		diff |= MD_TARGET;
+	if (mobj->tracer)
+		diff |= MD_TRACER;
+	if (mobj->friction != ORIG_FRICTION)
+		diff |= MD_FRICTION;
+	if (mobj->movefactor != ORIG_FRICTION_FACTOR)
+		diff |= MD_MOVEFACTOR;
+	if (mobj->fuse)
+		diff |= MD_FUSE;
+	if (mobj->watertop)
+		diff |= MD_WATERTOP;
+	if (mobj->waterbottom)
+		diff |= MD_WATERBOTTOM;
+	if (mobj->scale != FRACUNIT)
+		diff |= MD_SCALE;
+	if (mobj->destscale != mobj->scale)
+		diff |= MD_DSCALE;
+	if (mobj->scalespeed != FRACUNIT/12)
+		diff2 |= MD2_SCALESPEED;
+
+	if (mobj == redflag)
+		diff |= MD_REDFLAG;
+	if (mobj == blueflag)
+		diff |= MD_BLUEFLAG;
+
+	if (mobj->cusval)
+		diff2 |= MD2_CUSVAL;
+	if (mobj->cvmem)
+		diff2 |= MD2_CVMEM;
+	if (mobj->color)
+		diff2 |= MD2_COLOR;
+	if (mobj->skin)
+		diff2 |= MD2_SKIN;
+	if (mobj->extravalue1)
+		diff2 |= MD2_EXTVAL1;
+	if (mobj->extravalue2)
+		diff2 |= MD2_EXTVAL2;
+	if (mobj->hnext)
+		diff2 |= MD2_HNEXT;
+	if (mobj->hprev)
+		diff2 |= MD2_HPREV;
+	if (diff2 != 0)
+		diff |= MD_MORE;
+
+	// Scrap all of that. If we're a hoop center, this is ALL we're saving.
+	if (mobj->type == MT_HOOPCENTER)
+		diff = MD_SPAWNPOINT;
+
+	WRITEUINT8(save_p, type);
+	WRITEUINT32(save_p, diff);
+	if (diff & MD_MORE)
+		WRITEUINT16(save_p, diff2);
+
+	// save pointer, at load time we will search this pointer to reinitilize pointers
+	WRITEUINT32(save_p, (size_t)mobj);
+
+	WRITEFIXED(save_p, mobj->z); // Force this so 3dfloor problems don't arise.
+	WRITEFIXED(save_p, mobj->floorz);
+	WRITEFIXED(save_p, mobj->ceilingz);
+
+	if (diff & MD_SPAWNPOINT)
+	{
+		size_t z;
+
+		for (z = 0; z < nummapthings; z++)
+			if (&mapthings[z] == mobj->spawnpoint)
+				WRITEUINT16(save_p, z);
+		if (mobj->type == MT_HOOPCENTER)
+			return;
+	}
+
+	if (diff & MD_TYPE)
+		WRITEUINT32(save_p, mobj->type);
+	if (diff & MD_POS)
+	{
+		WRITEFIXED(save_p, mobj->x);
+		WRITEFIXED(save_p, mobj->y);
+		WRITEANGLE(save_p, mobj->angle);
+	}
+	if (diff & MD_MOM)
+	{
+		WRITEFIXED(save_p, mobj->momx);
+		WRITEFIXED(save_p, mobj->momy);
+		WRITEFIXED(save_p, mobj->momz);
+	}
+	if (diff & MD_RADIUS)
+		WRITEFIXED(save_p, mobj->radius);
+	if (diff & MD_HEIGHT)
+		WRITEFIXED(save_p, mobj->height);
+	if (diff & MD_FLAGS)
+		WRITEUINT32(save_p, mobj->flags);
+	if (diff & MD_FLAGS2)
+		WRITEUINT32(save_p, mobj->flags2);
+	if (diff & MD_HEALTH)
+		WRITEINT32(save_p, mobj->health);
+	if (diff & MD_RTIME)
+		WRITEINT32(save_p, mobj->reactiontime);
+	if (diff & MD_STATE)
+		WRITEUINT16(save_p, mobj->state-states);
+	if (diff & MD_TICS)
+		WRITEINT32(save_p, mobj->tics);
+	if (diff & MD_SPRITE)
+		WRITEUINT16(save_p, mobj->sprite);
+	if (diff & MD_FRAME)
+		WRITEUINT32(save_p, mobj->frame);
+	if (diff & MD_EFLAGS)
+		WRITEUINT8(save_p, mobj->eflags);
+	if (diff & MD_PLAYER)
+		WRITEUINT8(save_p, mobj->player-players);
+	if (diff & MD_MOVEDIR)
+		WRITEANGLE(save_p, mobj->movedir);
+	if (diff & MD_MOVECOUNT)
+		WRITEINT32(save_p, mobj->movecount);
+	if (diff & MD_THRESHOLD)
+		WRITEINT32(save_p, mobj->threshold);
+	if (diff & MD_LASTLOOK)
+		WRITEINT32(save_p, mobj->lastlook);
+	if (diff & MD_TARGET)
+		WRITEUINT32(save_p, mobj->target->mobjnum);
+	if (diff & MD_TRACER)
+		WRITEUINT32(save_p, mobj->tracer->mobjnum);
+	if (diff & MD_FRICTION)
+		WRITEFIXED(save_p, mobj->friction);
+	if (diff & MD_MOVEFACTOR)
+		WRITEFIXED(save_p, mobj->movefactor);
+	if (diff & MD_FUSE)
+		WRITEINT32(save_p, mobj->fuse);
+	if (diff & MD_WATERTOP)
+		WRITEFIXED(save_p, mobj->watertop);
+	if (diff & MD_WATERBOTTOM)
+		WRITEFIXED(save_p, mobj->waterbottom);
+	if (diff & MD_SCALE)
+		WRITEFIXED(save_p, mobj->scale);
+	if (diff & MD_DSCALE)
+		WRITEFIXED(save_p, mobj->destscale);
+	if (diff2 & MD2_SCALESPEED)
+		WRITEFIXED(save_p, mobj->scalespeed);
+	if (diff2 & MD2_CUSVAL)
+		WRITEINT32(save_p, mobj->cusval);
+	if (diff2 & MD2_CVMEM)
+		WRITEINT32(save_p, mobj->cvmem);
+	if (diff2 & MD2_SKIN)
+		WRITEUINT8(save_p, (UINT8)((skin_t *)mobj->skin - skins));
+	if (diff2 & MD2_COLOR)
+		WRITEUINT8(save_p, mobj->color);
+	if (diff2 & MD2_EXTVAL1)
+		WRITEINT32(save_p, mobj->extravalue1);
+	if (diff2 & MD2_EXTVAL2)
+		WRITEINT32(save_p, mobj->extravalue2);
+	if (diff2 & MD2_HNEXT)
+		WRITEUINT32(save_p, mobj->hnext->mobjnum);
+	if (diff2 & MD2_HPREV)
+		WRITEUINT32(save_p, mobj->hprev->mobjnum);
+
+	WRITEUINT32(save_p, mobj->mobjnum);
 }
 
 //
@@ -1149,6 +1477,7 @@ static void SaveExecutorThinker(const thinker_t *th, const UINT8 type)
 	WRITEUINT8(save_p, type);
 	WRITEUINT32(save_p, SaveLine(ht->line));
 	WRITEUINT32(save_p, SaveMobjnum(ht->caller));
+	WRITEUINT32(save_p, SaveSector(ht->sector));
 	WRITEINT32(save_p, ht->timer);
 }
 
@@ -1269,6 +1598,17 @@ static void SavePolyswingdoorThinker(const thinker_t *th, const UINT8 type)
 	WRITEUINT8(save_p, ht->closing);
 }
 
+static void SavePolydisplaceThinker(const thinker_t *th, const UINT8 type)
+{
+	const polydisplace_t *ht = (const void *)th;
+	WRITEUINT8(save_p, type);
+	WRITEINT32(save_p, ht->polyObjNum);
+	WRITEUINT32(save_p, SaveSector(ht->controlSector));
+	WRITEFIXED(save_p, ht->dx);
+	WRITEFIXED(save_p, ht->dy);
+	WRITEFIXED(save_p, ht->oldHeights);
+}
+
 #endif
 /*
 //
@@ -1290,9 +1630,6 @@ static inline void SaveWhatThinker(const thinker_t *th, const UINT8 type)
 static void P_NetArchiveThinkers(void)
 {
 	const thinker_t *th;
-	const mobj_t *mobj;
-	UINT32 diff;
-	UINT16 diff2;
 
 	WRITEUINT32(save_p, ARCHIVEBLOCK_THINKERS);
 
@@ -1301,230 +1638,8 @@ static void P_NetArchiveThinkers(void)
 	{
 		if (th->function.acp1 == (actionf_p1)P_MobjThinker)
 		{
-			mobj = (const mobj_t *)th;
-
-			// Ignore stationary hoops - these will be respawned from mapthings.
-			if (mobj->type == MT_HOOP)
-				continue;
-
-			// These are NEVER saved.
-			if (mobj->type == MT_HOOPCOLLIDE)
-				continue;
-
-			// This hoop has already been collected.
-			if (mobj->type == MT_HOOPCENTER && mobj->threshold == 4242)
-				continue;
-
-			if (mobj->spawnpoint && mobj->info->doomednum != -1)
-			{
-				// spawnpoint is not modified but we must save it since it is an identifier
-				diff = MD_SPAWNPOINT;
-
-				if ((mobj->x != mobj->spawnpoint->x << FRACBITS) ||
-					(mobj->y != mobj->spawnpoint->y << FRACBITS) ||
-					(mobj->angle != FixedAngle(mobj->spawnpoint->angle*FRACUNIT)))
-					diff |= MD_POS;
-
-				if (mobj->info->doomednum != mobj->spawnpoint->type)
-					diff |= MD_TYPE;
-			}
-			else
-				diff = MD_POS | MD_TYPE; // not a map spawned thing so make it from scratch
-
-			diff2 = 0;
-
-			// not the default but the most probable
-			if (mobj->momx != 0 || mobj->momy != 0 || mobj->momz != 0)
-				diff |= MD_MOM;
-			if (mobj->radius != mobj->info->radius)
-				diff |= MD_RADIUS;
-			if (mobj->height != mobj->info->height)
-				diff |= MD_HEIGHT;
-			if (mobj->flags != mobj->info->flags)
-				diff |= MD_FLAGS;
-			if (mobj->flags2)
-				diff |= MD_FLAGS2;
-			if (mobj->health != mobj->info->spawnhealth)
-				diff |= MD_HEALTH;
-			if (mobj->reactiontime != mobj->info->reactiontime)
-				diff |= MD_RTIME;
-			if ((statenum_t)(mobj->state-states) != mobj->info->spawnstate)
-				diff |= MD_STATE;
-			if (mobj->tics != mobj->state->tics)
-				diff |= MD_TICS;
-			if (mobj->sprite != mobj->state->sprite)
-				diff |= MD_SPRITE;
-			if (mobj->frame != mobj->state->frame)
-				diff |= MD_FRAME;
-			if (mobj->eflags)
-				diff |= MD_EFLAGS;
-			if (mobj->player)
-				diff |= MD_PLAYER;
-
-			if (mobj->movedir)
-				diff |= MD_MOVEDIR;
-			if (mobj->movecount)
-				diff |= MD_MOVECOUNT;
-			if (mobj->threshold)
-				diff |= MD_THRESHOLD;
-			if (mobj->lastlook != -1)
-				diff |= MD_LASTLOOK;
-			if (mobj->target)
-				diff |= MD_TARGET;
-			if (mobj->tracer)
-				diff |= MD_TRACER;
-			if (mobj->friction != ORIG_FRICTION)
-				diff |= MD_FRICTION;
-			if (mobj->movefactor != ORIG_FRICTION_FACTOR)
-				diff |= MD_MOVEFACTOR;
-			if (mobj->fuse)
-				diff |= MD_FUSE;
-			if (mobj->watertop)
-				diff |= MD_WATERTOP;
-			if (mobj->waterbottom)
-				diff |= MD_WATERBOTTOM;
-			if (mobj->scale != FRACUNIT)
-				diff |= MD_SCALE;
-			if (mobj->destscale != mobj->scale)
-				diff |= MD_DSCALE;
-			if (mobj->scalespeed != FRACUNIT/12)
-				diff2 |= MD2_SCALESPEED;
-
-			if (mobj == redflag)
-				diff |= MD_REDFLAG;
-			if (mobj == blueflag)
-				diff |= MD_BLUEFLAG;
-
-			if (mobj->cusval)
-				diff2 |= MD2_CUSVAL;
-			if (mobj->cvmem)
-				diff2 |= MD2_CVMEM;
-			if (mobj->color)
-				diff2 |= MD2_COLOR;
-			if (mobj->skin)
-				diff2 |= MD2_SKIN;
-			if (mobj->extravalue1)
-				diff2 |= MD2_EXTVAL1;
-			if (mobj->extravalue2)
-				diff2 |= MD2_EXTVAL2;
-			if (mobj->hnext)
-				diff2 |= MD2_HNEXT;
-			if (mobj->hprev)
-				diff2 |= MD2_HPREV;
-			if (diff2 != 0)
-				diff |= MD_MORE;
-
-			// Scrap all of that. If we're a hoop center, this is ALL we're saving.
-			if (mobj->type == MT_HOOPCENTER)
-				diff = MD_SPAWNPOINT;
-
-			WRITEUINT8(save_p, tc_mobj);
-			WRITEUINT32(save_p, diff);
-			if (diff & MD_MORE)
-				WRITEUINT16(save_p, diff2);
-
-			// save pointer, at load time we will search this pointer to reinitilize pointers
-			WRITEUINT32(save_p, (size_t)mobj);
-
-			WRITEFIXED(save_p, mobj->z); // Force this so 3dfloor problems don't arise.
-			WRITEFIXED(save_p, mobj->floorz);
-			WRITEFIXED(save_p, mobj->ceilingz);
-
-			if (diff & MD_SPAWNPOINT)
-			{
-				size_t z;
-
-				for (z = 0; z < nummapthings; z++)
-					if (&mapthings[z] == mobj->spawnpoint)
-						WRITEUINT16(save_p, z);
-				if (mobj->type == MT_HOOPCENTER)
-					continue;
-			}
-
-			if (diff & MD_TYPE)
-				WRITEUINT32(save_p, mobj->type);
-			if (diff & MD_POS)
-			{
-				WRITEFIXED(save_p, mobj->x);
-				WRITEFIXED(save_p, mobj->y);
-				WRITEANGLE(save_p, mobj->angle);
-			}
-			if (diff & MD_MOM)
-			{
-				WRITEFIXED(save_p, mobj->momx);
-				WRITEFIXED(save_p, mobj->momy);
-				WRITEFIXED(save_p, mobj->momz);
-			}
-			if (diff & MD_RADIUS)
-				WRITEFIXED(save_p, mobj->radius);
-			if (diff & MD_HEIGHT)
-				WRITEFIXED(save_p, mobj->height);
-			if (diff & MD_FLAGS)
-				WRITEUINT32(save_p, mobj->flags);
-			if (diff & MD_FLAGS2)
-				WRITEUINT32(save_p, mobj->flags2);
-			if (diff & MD_HEALTH)
-				WRITEINT32(save_p, mobj->health);
-			if (diff & MD_RTIME)
-				WRITEINT32(save_p, mobj->reactiontime);
-			if (diff & MD_STATE)
-				WRITEUINT16(save_p, mobj->state-states);
-			if (diff & MD_TICS)
-				WRITEINT32(save_p, mobj->tics);
-			if (diff & MD_SPRITE)
-				WRITEUINT16(save_p, mobj->sprite);
-			if (diff & MD_FRAME)
-				WRITEUINT32(save_p, mobj->frame);
-			if (diff & MD_EFLAGS)
-				WRITEUINT8(save_p, mobj->eflags);
-			if (diff & MD_PLAYER)
-				WRITEUINT8(save_p, mobj->player-players);
-			if (diff & MD_MOVEDIR)
-				WRITEANGLE(save_p, mobj->movedir);
-			if (diff & MD_MOVECOUNT)
-				WRITEINT32(save_p, mobj->movecount);
-			if (diff & MD_THRESHOLD)
-				WRITEINT32(save_p, mobj->threshold);
-			if (diff & MD_LASTLOOK)
-				WRITEINT32(save_p, mobj->lastlook);
-			if (diff & MD_TARGET)
-				WRITEUINT32(save_p, mobj->target->mobjnum);
-			if (diff & MD_TRACER)
-				WRITEUINT32(save_p, mobj->tracer->mobjnum);
-			if (diff & MD_FRICTION)
-				WRITEFIXED(save_p, mobj->friction);
-			if (diff & MD_MOVEFACTOR)
-				WRITEFIXED(save_p, mobj->movefactor);
-			if (diff & MD_FUSE)
-				WRITEINT32(save_p, mobj->fuse);
-			if (diff & MD_WATERTOP)
-				WRITEFIXED(save_p, mobj->watertop);
-			if (diff & MD_WATERBOTTOM)
-				WRITEFIXED(save_p, mobj->waterbottom);
-			if (diff & MD_SCALE)
-				WRITEFIXED(save_p, mobj->scale);
-			if (diff & MD_DSCALE)
-				WRITEFIXED(save_p, mobj->destscale);
-			if (diff2 & MD2_SCALESPEED)
-				WRITEFIXED(save_p, mobj->scalespeed);
-			if (diff2 & MD2_CUSVAL)
-				WRITEINT32(save_p, mobj->cusval);
-			if (diff2 & MD2_CVMEM)
-				WRITEINT32(save_p, mobj->cvmem);
-			if (diff2 & MD2_SKIN)
-				WRITEUINT8(save_p, (UINT8)((skin_t *)mobj->skin - skins));
-			if (diff2 & MD2_COLOR)
-				WRITEUINT8(save_p, mobj->color);
-			if (diff2 & MD2_EXTVAL1)
-				WRITEINT32(save_p, mobj->extravalue1);
-			if (diff2 & MD2_EXTVAL2)
-				WRITEINT32(save_p, mobj->extravalue2);
-			if (diff2 & MD2_HNEXT)
-				WRITEUINT32(save_p, mobj->hnext->mobjnum);
-			if (diff2 & MD2_HPREV)
-				WRITEUINT32(save_p, mobj->hprev->mobjnum);
-
-			WRITEUINT32(save_p, mobj->mobjnum);
+			SaveMobjThinker(th, tc_mobj);
+			continue;
 		}
 #ifdef PARANOIA
 		else if (th->function.acp1 == (actionf_p1)P_RainThinker
@@ -1696,6 +1811,11 @@ static void P_NetArchiveThinkers(void)
 			SavePolymoveThinker(th, tc_polyflag);
 			continue;
 		}
+		else if (th->function.acp1 == (actionf_p1)T_PolyObjDisplace)
+		{
+			SavePolydisplaceThinker(th, tc_polydisplace);
+			continue;
+		}
 #endif
 #ifdef PARANOIA
 		else if (th->function.acv != P_RemoveThinkerDelayed) // wait garbage collection
@@ -1750,6 +1870,232 @@ static inline player_t *LoadPlayer(UINT32 player)
 {
 	if (player >= MAXPLAYERS) return NULL;
 	return &players[player];
+}
+
+//
+// LoadMobjThinker
+//
+// Loads a mobj_t from a save game
+//
+static void LoadMobjThinker(actionf_p1 thinker)
+{
+	thinker_t *next;
+	mobj_t *mobj;
+	UINT32 diff;
+	UINT16 diff2;
+	INT32 i;
+	fixed_t z, floorz, ceilingz;
+
+	diff = READUINT32(save_p);
+	if (diff & MD_MORE)
+		diff2 = READUINT16(save_p);
+	else
+		diff2 = 0;
+
+	next = (void *)(size_t)READUINT32(save_p);
+
+	z = READFIXED(save_p); // Force this so 3dfloor problems don't arise.
+	floorz = READFIXED(save_p);
+	ceilingz = READFIXED(save_p);
+
+	if (diff & MD_SPAWNPOINT)
+	{
+		UINT16 spawnpointnum = READUINT16(save_p);
+
+		if (mapthings[spawnpointnum].type == 1705 || mapthings[spawnpointnum].type == 1713) // NiGHTS Hoop special case
+		{
+			P_SpawnHoopsAndRings(&mapthings[spawnpointnum]);
+			return;
+		}
+
+		mobj = Z_Calloc(sizeof (*mobj), PU_LEVEL, NULL);
+
+		mobj->spawnpoint = &mapthings[spawnpointnum];
+		mapthings[spawnpointnum].mobj = mobj;
+	}
+	else
+		mobj = Z_Calloc(sizeof (*mobj), PU_LEVEL, NULL);
+
+	// declare this as a valid mobj as soon as possible.
+	mobj->thinker.function.acp1 = thinker;
+
+	mobj->z = z;
+	mobj->floorz = floorz;
+	mobj->ceilingz = ceilingz;
+
+	if (diff & MD_TYPE)
+		mobj->type = READUINT32(save_p);
+	else
+	{
+		for (i = 0; i < NUMMOBJTYPES; i++)
+			if (mobj->spawnpoint && mobj->spawnpoint->type == mobjinfo[i].doomednum)
+				break;
+		if (i == NUMMOBJTYPES)
+		{
+			if (mobj->spawnpoint)
+				CONS_Alert(CONS_ERROR, "Found mobj with unknown map thing type %d\n", mobj->spawnpoint->type);
+			else
+				CONS_Alert(CONS_ERROR, "Found mobj with unknown map thing type NULL\n");
+			I_Error("Savegame corrupted");
+		}
+		mobj->type = i;
+	}
+	mobj->info = &mobjinfo[mobj->type];
+	if (diff & MD_POS)
+	{
+		mobj->x = READFIXED(save_p);
+		mobj->y = READFIXED(save_p);
+		mobj->angle = READANGLE(save_p);
+	}
+	else
+	{
+		mobj->x = mobj->spawnpoint->x << FRACBITS;
+		mobj->y = mobj->spawnpoint->y << FRACBITS;
+		mobj->angle = FixedAngle(mobj->spawnpoint->angle*FRACUNIT);
+	}
+	if (diff & MD_MOM)
+	{
+		mobj->momx = READFIXED(save_p);
+		mobj->momy = READFIXED(save_p);
+		mobj->momz = READFIXED(save_p);
+	} // otherwise they're zero, and the memset took care of it
+
+	if (diff & MD_RADIUS)
+		mobj->radius = READFIXED(save_p);
+	else
+		mobj->radius = mobj->info->radius;
+	if (diff & MD_HEIGHT)
+		mobj->height = READFIXED(save_p);
+	else
+		mobj->height = mobj->info->height;
+	if (diff & MD_FLAGS)
+		mobj->flags = READUINT32(save_p);
+	else
+		mobj->flags = mobj->info->flags;
+	if (diff & MD_FLAGS2)
+		mobj->flags2 = READUINT32(save_p);
+	if (diff & MD_HEALTH)
+		mobj->health = READINT32(save_p);
+	else
+		mobj->health = mobj->info->spawnhealth;
+	if (diff & MD_RTIME)
+		mobj->reactiontime = READINT32(save_p);
+	else
+		mobj->reactiontime = mobj->info->reactiontime;
+
+	if (diff & MD_STATE)
+		mobj->state = &states[READUINT16(save_p)];
+	else
+		mobj->state = &states[mobj->info->spawnstate];
+	if (diff & MD_TICS)
+		mobj->tics = READINT32(save_p);
+	else
+		mobj->tics = mobj->state->tics;
+	if (diff & MD_SPRITE)
+		mobj->sprite = READUINT16(save_p);
+	else
+		mobj->sprite = mobj->state->sprite;
+	if (diff & MD_FRAME)
+		mobj->frame = READUINT32(save_p);
+	else
+		mobj->frame = mobj->state->frame;
+	if (diff & MD_EFLAGS)
+		mobj->eflags = READUINT8(save_p);
+	if (diff & MD_PLAYER)
+	{
+		i = READUINT8(save_p);
+		mobj->player = &players[i];
+		mobj->player->mo = mobj;
+		// added for angle prediction
+		if (consoleplayer == i)
+			localangle = mobj->angle;
+		if (secondarydisplayplayer == i)
+			localangle2 = mobj->angle;
+	}
+	if (diff & MD_MOVEDIR)
+		mobj->movedir = READANGLE(save_p);
+	if (diff & MD_MOVECOUNT)
+		mobj->movecount = READINT32(save_p);
+	if (diff & MD_THRESHOLD)
+		mobj->threshold = READINT32(save_p);
+	if (diff & MD_LASTLOOK)
+		mobj->lastlook = READINT32(save_p);
+	else
+		mobj->lastlook = -1;
+	if (diff & MD_TARGET)
+		mobj->target = (mobj_t *)(size_t)READUINT32(save_p);
+	if (diff & MD_TRACER)
+		mobj->tracer = (mobj_t *)(size_t)READUINT32(save_p);
+	if (diff & MD_FRICTION)
+		mobj->friction = READFIXED(save_p);
+	else
+		mobj->friction = ORIG_FRICTION;
+	if (diff & MD_MOVEFACTOR)
+		mobj->movefactor = READFIXED(save_p);
+	else
+		mobj->movefactor = ORIG_FRICTION_FACTOR;
+	if (diff & MD_FUSE)
+		mobj->fuse = READINT32(save_p);
+	if (diff & MD_WATERTOP)
+		mobj->watertop = READFIXED(save_p);
+	if (diff & MD_WATERBOTTOM)
+		mobj->waterbottom = READFIXED(save_p);
+	if (diff & MD_SCALE)
+		mobj->scale = READFIXED(save_p);
+	else
+		mobj->scale = FRACUNIT;
+	if (diff & MD_DSCALE)
+		mobj->destscale = READFIXED(save_p);
+	else
+		mobj->destscale = mobj->scale;
+	if (diff2 & MD2_SCALESPEED)
+		mobj->scalespeed = READFIXED(save_p);
+	else
+		mobj->scalespeed = FRACUNIT/12;
+	if (diff2 & MD2_CUSVAL)
+		mobj->cusval = READINT32(save_p);
+	if (diff2 & MD2_CVMEM)
+		mobj->cvmem = READINT32(save_p);
+	if (diff2 & MD2_SKIN)
+		mobj->skin = &skins[READUINT8(save_p)];
+	if (diff2 & MD2_COLOR)
+		mobj->color = READUINT8(save_p);
+	if (diff2 & MD2_EXTVAL1)
+		mobj->extravalue1 = READINT32(save_p);
+	if (diff2 & MD2_EXTVAL2)
+		mobj->extravalue2 = READINT32(save_p);
+	if (diff2 & MD2_HNEXT)
+		mobj->hnext = (mobj_t *)(size_t)READUINT32(save_p);
+	if (diff2 & MD2_HPREV)
+		mobj->hprev = (mobj_t *)(size_t)READUINT32(save_p);
+
+	if (diff & MD_REDFLAG)
+	{
+		redflag = mobj;
+		rflagpoint = mobj->spawnpoint;
+	}
+	if (diff & MD_BLUEFLAG)
+	{
+		blueflag = mobj;
+		bflagpoint = mobj->spawnpoint;
+	}
+
+	// set sprev, snext, bprev, bnext, subsector
+	P_SetThingPosition(mobj);
+
+	mobj->mobjnum = READUINT32(save_p);
+
+	if (mobj->player)
+	{
+		if (mobj->eflags & MFE_VERTICALFLIP)
+			mobj->player->viewz = mobj->z + mobj->height - mobj->player->viewheight;
+		else
+			mobj->player->viewz = mobj->player->mo->z + mobj->player->viewheight;
+	}
+
+	P_AddThinker(&mobj->thinker);
+
+	mobj->info = (mobjinfo_t *)next; // temporarily, set when leave this function
 }
 
 //
@@ -2021,11 +2367,15 @@ static void LoadPusherThinker(actionf_p1 thinker)
 static inline void LoadLaserThinker(actionf_p1 thinker)
 {
 	laserthink_t *ht = Z_Malloc(sizeof (*ht), PU_LEVSPEC, NULL);
+	ffloor_t *rover = NULL;
 	ht->thinker.function.acp1 = thinker;
 	ht->sector = LoadSector(READUINT32(save_p));
-	ht->ffloor = NULL;
 	ht->sec = LoadSector(READUINT32(save_p));
 	ht->sourceline = LoadLine(READUINT32(save_p));
+	for (rover = ht->sector->ffloors; rover; rover = rover->next)
+		if (rover->secnum == (size_t)(ht->sec - sectors)
+		&& rover->master == ht->sourceline)
+			ht->ffloor = rover;
 	P_AddThinker(&ht->thinker);
 }
 
@@ -2057,6 +2407,7 @@ static inline void LoadExecutorThinker(actionf_p1 thinker)
 	ht->thinker.function.acp1 = thinker;
 	ht->line = LoadLine(READUINT32(save_p));
 	ht->caller = LoadMobj(READUINT32(save_p));
+	ht->sector = LoadSector(READUINT32(save_p));
 	ht->timer = READINT32(save_p);
 	P_AddThinker(&ht->thinker);
 }
@@ -2183,6 +2534,23 @@ static inline void LoadPolyswingdoorThinker(actionf_p1 thinker)
 	ht->closing = READUINT8(save_p);
 	P_AddThinker(&ht->thinker);
 }
+
+//
+// LoadPolydisplaceThinker
+//
+// Loads a polydisplace_t thinker
+//
+static inline void LoadPolydisplaceThinker(actionf_p1 thinker)
+{
+	polydisplace_t *ht = Z_Malloc(sizeof (*ht), PU_LEVSPEC, NULL);
+	ht->thinker.function.acp1 = thinker;
+	ht->polyObjNum = READINT32(save_p);
+	ht->controlSector = LoadSector(READUINT32(save_p));
+	ht->dx = READFIXED(save_p);
+	ht->dy = READFIXED(save_p);
+	ht->oldHeights = READFIXED(save_p);
+	P_AddThinker(&ht->thinker);
+}
 #endif
 
 /*
@@ -2205,13 +2573,8 @@ static void P_NetUnArchiveThinkers(void)
 {
 	thinker_t *currentthinker;
 	thinker_t *next;
-	mobj_t *mobj;
-	UINT32 diff;
-	UINT16 diff2;
-	INT32 i;
 	UINT8 tclass;
 	UINT8 restoreNum = false;
-	fixed_t z, floorz, ceilingz;
 
 	if (READUINT32(save_p) != ARCHIVEBLOCK_THINKERS)
 		I_Error("Bad $$$.sav at archive block Thinkers");
@@ -2222,7 +2585,6 @@ static void P_NetUnArchiveThinkers(void)
 	{
 		next = currentthinker->next;
 
-		mobj = (mobj_t *)currentthinker;
 		if (currentthinker->function.acp1 == (actionf_p1)P_MobjThinker)
 			P_RemoveSavegameMobj((mobj_t *)currentthinker); // item isn't saved, don't remove it
 		else
@@ -2244,216 +2606,7 @@ static void P_NetUnArchiveThinkers(void)
 		switch (tclass)
 		{
 			case tc_mobj:
-				diff = READUINT32(save_p);
-				if (diff & MD_MORE)
-					diff2 = READUINT16(save_p);
-				else
-					diff2 = 0;
-
-				next = (void *)(size_t)READUINT32(save_p);
-
-				z = READFIXED(save_p); // Force this so 3dfloor problems don't arise.
-				floorz = READFIXED(save_p);
-				ceilingz = READFIXED(save_p);
-
-				if (diff & MD_SPAWNPOINT)
-				{
-					UINT16 spawnpointnum = READUINT16(save_p);
-
-					if (mapthings[spawnpointnum].type == 1705 || mapthings[spawnpointnum].type == 1713) // NiGHTS Hoop special case
-					{
-						P_SpawnHoopsAndRings(&mapthings[spawnpointnum]);
-						continue;
-					}
-
-					mobj = Z_Calloc(sizeof (*mobj), PU_LEVEL, NULL);
-
-					mobj->spawnpoint = &mapthings[spawnpointnum];
-					mapthings[spawnpointnum].mobj = mobj;
-				}
-				else
-					mobj = Z_Calloc(sizeof (*mobj), PU_LEVEL, NULL);
-
-				// declare this as a valid mobj as soon as possible.
-				mobj->thinker.function.acp1 = (actionf_p1)P_MobjThinker;
-
-				mobj->z = z;
-				mobj->floorz = floorz;
-				mobj->ceilingz = ceilingz;
-
-				if (diff & MD_TYPE)
-					mobj->type = READUINT32(save_p);
-				else
-				{
-					for (i = 0; i < NUMMOBJTYPES; i++)
-						if (mobj->spawnpoint && mobj->spawnpoint->type == mobjinfo[i].doomednum)
-							break;
-					if (i == NUMMOBJTYPES)
-					{
-						if (mobj->spawnpoint)
-							CONS_Alert(CONS_ERROR, "Found mobj with unknown map thing type %d\n", mobj->spawnpoint->type);
-						else
-							CONS_Alert(CONS_ERROR, "Found mobj with unknown map thing type NULL\n");
-						I_Error("Savegame corrupted");
-					}
-					mobj->type = i;
-				}
-				mobj->info = &mobjinfo[mobj->type];
-				if (diff & MD_POS)
-				{
-					mobj->x = READFIXED(save_p);
-					mobj->y = READFIXED(save_p);
-					mobj->angle = READANGLE(save_p);
-				}
-				else
-				{
-					mobj->x = mobj->spawnpoint->x << FRACBITS;
-					mobj->y = mobj->spawnpoint->y << FRACBITS;
-					mobj->angle = FixedAngle(mobj->spawnpoint->angle*FRACUNIT);
-				}
-				if (diff & MD_MOM)
-				{
-					mobj->momx = READFIXED(save_p);
-					mobj->momy = READFIXED(save_p);
-					mobj->momz = READFIXED(save_p);
-				} // otherwise they're zero, and the memset took care of it
-
-				if (diff & MD_RADIUS)
-					mobj->radius = READFIXED(save_p);
-				else
-					mobj->radius = mobj->info->radius;
-				if (diff & MD_HEIGHT)
-					mobj->height = READFIXED(save_p);
-				else
-					mobj->height = mobj->info->height;
-				if (diff & MD_FLAGS)
-					mobj->flags = READUINT32(save_p);
-				else
-					mobj->flags = mobj->info->flags;
-				if (diff & MD_FLAGS2)
-					mobj->flags2 = READUINT32(save_p);
-				if (diff & MD_HEALTH)
-					mobj->health = READINT32(save_p);
-				else
-					mobj->health = mobj->info->spawnhealth;
-				if (diff & MD_RTIME)
-					mobj->reactiontime = READINT32(save_p);
-				else
-					mobj->reactiontime = mobj->info->reactiontime;
-
-				if (diff & MD_STATE)
-					mobj->state = &states[READUINT16(save_p)];
-				else
-					mobj->state = &states[mobj->info->spawnstate];
-				if (diff & MD_TICS)
-					mobj->tics = READINT32(save_p);
-				else
-					mobj->tics = mobj->state->tics;
-				if (diff & MD_SPRITE)
-					mobj->sprite = READUINT16(save_p);
-				else
-					mobj->sprite = mobj->state->sprite;
-				if (diff & MD_FRAME)
-					mobj->frame = READUINT32(save_p);
-				else
-					mobj->frame = mobj->state->frame;
-				if (diff & MD_EFLAGS)
-					mobj->eflags = READUINT8(save_p);
-				if (diff & MD_PLAYER)
-				{
-					i = READUINT8(save_p);
-					mobj->player = &players[i];
-					mobj->player->mo = mobj;
-					// added for angle prediction
-					if (consoleplayer == i)
-						localangle = mobj->angle;
-					if (secondarydisplayplayer == i)
-						localangle2 = mobj->angle;
-				}
-				if (diff & MD_MOVEDIR)
-					mobj->movedir = READANGLE(save_p);
-				if (diff & MD_MOVECOUNT)
-					mobj->movecount = READINT32(save_p);
-				if (diff & MD_THRESHOLD)
-					mobj->threshold = READINT32(save_p);
-				if (diff & MD_LASTLOOK)
-					mobj->lastlook = READINT32(save_p);
-				else
-					mobj->lastlook = -1;
-				if (diff & MD_TARGET)
-					mobj->target = (mobj_t *)(size_t)READUINT32(save_p);
-				if (diff & MD_TRACER)
-					mobj->tracer = (mobj_t *)(size_t)READUINT32(save_p);
-				if (diff & MD_FRICTION)
-					mobj->friction = READFIXED(save_p);
-				else
-					mobj->friction = ORIG_FRICTION;
-				if (diff & MD_MOVEFACTOR)
-					mobj->movefactor = READFIXED(save_p);
-				else
-					mobj->movefactor = ORIG_FRICTION_FACTOR;
-				if (diff & MD_FUSE)
-					mobj->fuse = READINT32(save_p);
-				if (diff & MD_WATERTOP)
-					mobj->watertop = READFIXED(save_p);
-				if (diff & MD_WATERBOTTOM)
-					mobj->waterbottom = READFIXED(save_p);
-				if (diff & MD_SCALE)
-					mobj->scale = READFIXED(save_p);
-				else
-					mobj->scale = FRACUNIT;
-				if (diff & MD_DSCALE)
-					mobj->destscale = READFIXED(save_p);
-				else
-					mobj->destscale = mobj->scale;
-				if (diff2 & MD2_SCALESPEED)
-					mobj->scalespeed = READFIXED(save_p);
-				else
-					mobj->scalespeed = FRACUNIT/12;
-				if (diff2 & MD2_CUSVAL)
-					mobj->cusval = READINT32(save_p);
-				if (diff2 & MD2_CVMEM)
-					mobj->cvmem = READINT32(save_p);
-				if (diff2 & MD2_SKIN)
-					mobj->skin = &skins[READUINT8(save_p)];
-				if (diff2 & MD2_COLOR)
-					mobj->color = READUINT8(save_p);
-				if (diff2 & MD2_EXTVAL1)
-					mobj->extravalue1 = READINT32(save_p);
-				if (diff2 & MD2_EXTVAL2)
-					mobj->extravalue2 = READINT32(save_p);
-				if (diff2 & MD2_HNEXT)
-					mobj->hnext = (mobj_t *)(size_t)READUINT32(save_p);
-				if (diff2 & MD2_HPREV)
-					mobj->hprev = (mobj_t *)(size_t)READUINT32(save_p);
-
-				if (diff & MD_REDFLAG)
-				{
-					redflag = mobj;
-					rflagpoint = mobj->spawnpoint;
-				}
-				if (diff & MD_BLUEFLAG)
-				{
-					blueflag = mobj;
-					bflagpoint = mobj->spawnpoint;
-				}
-
-				// set sprev, snext, bprev, bnext, subsector
-				P_SetThingPosition(mobj);
-
-				mobj->mobjnum = READUINT32(save_p);
-
-				if (mobj->player)
-				{
-					if (mobj->eflags & MFE_VERTICALFLIP)
-						mobj->player->viewz = mobj->z + mobj->height - mobj->player->viewheight;
-					else
-						mobj->player->viewz = mobj->player->mo->z + mobj->player->viewheight;
-				}
-
-				P_AddThinker(&mobj->thinker);
-
-				mobj->info = (mobjinfo_t *)next; // temporarily, set when leave this function
+				LoadMobjThinker((actionf_p1)P_MobjThinker);
 				break;
 
 			case tc_ceiling:
@@ -2574,8 +2727,13 @@ static void P_NetUnArchiveThinkers(void)
 			case tc_polyswingdoor:
 				LoadPolyswingdoorThinker((actionf_p1)T_PolyDoorSwing);
 				break;
+
 			case tc_polyflag:
 				LoadPolymoveThinker((actionf_p1)T_PolyObjFlag);
+				break;
+
+			case tc_polydisplace:
+				LoadPolydisplaceThinker((actionf_p1)T_PolyObjDisplace);
 				break;
 #endif
 			case tc_scroll:
@@ -2617,13 +2775,29 @@ static void P_NetUnArchiveThinkers(void)
 // haleyjd 03/26/06: PolyObject saving code
 //
 #ifdef POLYOBJECTS
+#define PD_FLAGS  0x01
+#define PD_TRANS   0x02
+
 static inline void P_ArchivePolyObj(polyobj_t *po)
 {
+	UINT8 diff = 0;
 	WRITEINT32(save_p, po->id);
 	WRITEANGLE(save_p, po->angle);
 
 	WRITEFIXED(save_p, po->spawnSpot.x);
 	WRITEFIXED(save_p, po->spawnSpot.y);
+
+	if (po->flags != po->spawnflags)
+		diff |= PD_FLAGS;
+	if (po->translucency != 0)
+		diff |= PD_TRANS;
+
+	WRITEUINT8(save_p, diff);
+
+	if (diff & PD_FLAGS)
+		WRITEINT32(save_p, po->flags);
+	if (diff & PD_TRANS)
+		WRITEINT32(save_p, po->translucency);
 }
 
 static inline void P_UnArchivePolyObj(polyobj_t *po)
@@ -2631,6 +2805,7 @@ static inline void P_UnArchivePolyObj(polyobj_t *po)
 	INT32 id;
 	UINT32 angle;
 	fixed_t x, y;
+	UINT8 diff;
 
 	// nullify all polyobject thinker pointers;
 	// the thinkers themselves will fight over who gets the field
@@ -2643,6 +2818,13 @@ static inline void P_UnArchivePolyObj(polyobj_t *po)
 
 	x = READFIXED(save_p);
 	y = READFIXED(save_p);
+
+	diff = READUINT8(save_p);
+
+	if (diff & PD_FLAGS)
+		po->flags = READINT32(save_p);
+	if (diff & PD_TRANS)
+		po->translucency = READINT32(save_p);
 
 	// if the object is bad or isn't in the id hash, we can do nothing more
 	// with it, so return now
@@ -2812,6 +2994,14 @@ static inline void P_NetArchiveSpecials(void)
 
 	// Current global weather type
 	WRITEUINT8(save_p, globalweather);
+
+	if (metalplayback) // Is metal sonic running?
+	{
+		WRITEUINT8(save_p, 0x01);
+		G_SaveMetal(&save_p);
+	}
+	else
+		WRITEUINT8(save_p, 0x00);
 }
 
 //
@@ -2851,6 +3041,9 @@ static void P_NetUnArchiveSpecials(void)
 		if (curWeather != PRECIP_NONE)
 			P_SwitchWeather(globalweather);
 	}
+
+	if (READUINT8(save_p) == 0x01) // metal sonic
+		G_LoadMetal(&save_p);
 }
 
 // =======================================================================

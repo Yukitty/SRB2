@@ -74,6 +74,12 @@ int	snprintf(char *str, size_t n, const char *fmt, ...);
 #include "m_cond.h" // condition initialization
 #include "fastcmp.h"
 
+#ifdef CMAKECONFIG
+#include "config.h"
+#else
+#include "config.h.in"
+#endif
+
 #ifdef _XBOX
 #include "sdl/SRB2XBOX/xboxhelp.h"
 #endif
@@ -93,6 +99,10 @@ int	snprintf(char *str, size_t n, const char *fmt, ...);
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
+
+// platform independant focus loss
+UINT8 window_notinfocus = false;
+
 
 //
 // DEMO LOOP
@@ -444,6 +454,17 @@ static void D_Display(void)
 		CON_Drawer();
 
 	M_Drawer(); // menu is drawn even on top of everything
+
+	// focus lost notification goes on top of everything, even the former everything
+	if (window_notinfocus)
+	{
+		M_DrawTextBox((BASEVIDWIDTH/2) - (60), (BASEVIDHEIGHT/2) - (16), 13, 2);
+		if (gamestate == GS_LEVEL && (P_AutoPause() || paused))
+			V_DrawCenteredString(BASEVIDWIDTH/2, (BASEVIDHEIGHT/2) - (4), V_YELLOWMAP, "Game Paused");
+		else
+			V_DrawCenteredString(BASEVIDWIDTH/2, (BASEVIDHEIGHT/2) - (4), V_YELLOWMAP, "Focus Lost");
+	}
+
 	NetUpdate(); // send out any new accumulation
 
 	// It's safe to end the game now.
@@ -731,6 +752,7 @@ void D_AdvanceDemo(void)
 //
 void D_StartTitle(void)
 {
+	INT32 i;
 	if (netgame)
 	{
 		if (gametype == GT_COOP)
@@ -756,6 +778,16 @@ void D_StartTitle(void)
 	// (otherwise the game still thinks we're playing!)
 	SV_StopServer();
 	SV_ResetServer();
+
+	for (i = 0; i < MAXPLAYERS; i++)
+		CL_ClearPlayer(i);
+
+	splitscreen = false;
+	SplitScreen_OnChange();
+	botingame = false;
+	botskin = 0;
+	cv_debug = 0;
+	emeralds = 0;
 
 	// In case someone exits out at the same time they start a time attack run,
 	// reset modeattacking
@@ -907,7 +939,7 @@ static void IdentifyVersion(void)
 	D_AddFile(va(pandf,srb2waddir,"rings.dta"));
 
 	// Add our crappy patches to fix our bugs
-	D_AddFile(va(pandf,srb2waddir,"patch.dta"));
+	// D_AddFile(va(pandf,srb2waddir,"patch.dta"));
 
 #if !defined (HAVE_SDL) || defined (HAVE_MIXER)
 	{
@@ -1285,7 +1317,7 @@ void D_SRB2Main2(void)
 #endif
 
 #ifdef __EMSCRIPTEN__
-	mainwads = 5;
+	mainwads = 4;
 #else
 #if 1 // md5s last updated 8/05/14
 
@@ -1299,7 +1331,7 @@ void D_SRB2Main2(void)
 	// ...except it does if they slip maps in there, and that's what W_VerifyNMUSlumps is for.
 #endif
 
-	mainwads = 5; // there are 5 wads not to unload
+	mainwads = 4; // there are 5 wads not to unload
 #endif
 
 	CONS_Printf("R_Init(): Init SRB2 refresh daemon.\n");

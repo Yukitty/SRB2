@@ -352,7 +352,7 @@ static void clear_conditionsets(void)
 {
 	UINT8 i;
 	for (i = 0; i < MAXCONDITIONSETS; ++i)
-		M_ClearConditionSet(i);
+		M_ClearConditionSet(i+1);
 }
 
 static void clear_levels(void)
@@ -5053,7 +5053,12 @@ static const char *const STATE_LIST[] = { // array length left dynamic for sanit
 	"S_ARROWDOWN",
 
 	// Trapgoyle Demon fire
-	"S_DEMONFIRE",
+	"S_DEMONFIRE1",
+	"S_DEMONFIRE2",
+	"S_DEMONFIRE3",
+	"S_DEMONFIRE4",
+	"S_DEMONFIRE5",
+	"S_DEMONFIRE6",
 
 	"S_GFZFLOWERA",
 	"S_GFZFLOWERA2",
@@ -7063,7 +7068,6 @@ static const char *const MOBJTYPE_LIST[] = {  // array length left dynamic for s
 	"MT_NIGHTOPIANHELPER", // the actual helper object that orbits you
 
 	// Utility Objects
-	"MT_CHAOSSPAWNER",
 	"MT_TELEPORTMAN",
 	"MT_ALTVIEWMAN",
 	"MT_CRUMBLEOBJ", // Sound generator for crumbling platform
@@ -7274,6 +7278,7 @@ static const char *const PLAYERFLAG_LIST[] = {
 
 	/*** misc ***/
 	"FORCESTRAFE", // Translate turn inputs into strafe inputs
+	"ANALOGMODE", // Analog mode?
 
 	NULL // stop loop here.
 };
@@ -7453,6 +7458,17 @@ struct {
 	{"FF_FULLBRIGHT",FF_FULLBRIGHT},
 	{"FF_TRANSMASK",FF_TRANSMASK},
 	{"FF_TRANSSHIFT",FF_TRANSSHIFT},
+	// new preshifted translucency (used in source)
+	{"FF_TRANS10",FF_TRANS10},
+	{"FF_TRANS20",FF_TRANS20},
+	{"FF_TRANS30",FF_TRANS30},
+	{"FF_TRANS40",FF_TRANS40},
+	{"FF_TRANS50",FF_TRANS50},
+	{"FF_TRANS60",FF_TRANS60},
+	{"FF_TRANS70",FF_TRANS70},
+	{"FF_TRANS80",FF_TRANS80},
+	{"FF_TRANS90",FF_TRANS90},
+	// compatibility
 	// Transparency for SOCs is pre-shifted
 	{"TR_TRANS10",tr_trans10<<FF_TRANSSHIFT},
 	{"TR_TRANS20",tr_trans20<<FF_TRANSSHIFT},
@@ -8682,12 +8698,7 @@ static inline int lib_getenum(lua_State *L)
 		lua_pushinteger(L, mapmusic);
 		return 1;
 	} else if (fastcmp(word,"server")) {
-		if (dedicated || !playeringame[serverplayer])
-			return 0;
-		LUA_PushUserdata(L, &players[serverplayer], META_PLAYER);
-		return 1;
-	} else if (fastcmp(word,"dedicatedserver")) {
-		if (!dedicated)
+		if (!playeringame[serverplayer])
 			return 0;
 		LUA_PushUserdata(L, &players[serverplayer], META_PLAYER);
 		return 1;

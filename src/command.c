@@ -1059,9 +1059,22 @@ static void Setvalue(consvar_t *var, const char *valstr, boolean stealth)
 
 	if (var->PossibleValue)
 	{
-		INT32 v = atoi(valstr);
-		if (!v && valstr[0] != '0')
-			v = INT32_MIN; // Invalid integer trigger
+		INT32 v;
+
+		if (var->flags & CV_FLOAT)
+		{
+			double d = atof(valstr);
+			if (!d && valstr[0] != '0')
+				v = INT32_MIN;
+			else
+				v = (INT32)(d * FRACUNIT);
+		}
+		else
+		{
+			v = atoi(valstr);
+			if (!v && valstr[0] != '0')
+				v = INT32_MIN; // Invalid integer trigger
+		}
 
 		if (var->PossibleValue[0].strvalue && !stricmp(var->PossibleValue[0].strvalue, "MIN")) // bounded cvar
 		{
@@ -1138,13 +1151,13 @@ found:
 
 	var->string = var->zstring = Z_StrDup(valstr);
 
-	if (var->flags & CV_FLOAT)
+	if (override)
+		var->value = overrideval;
+	else if (var->flags & CV_FLOAT)
 	{
 		double d = atof(var->string);
 		var->value = (INT32)(d * FRACUNIT);
 	}
-	else if (override)
-		var->value = overrideval;
 	else
 		var->value = atoi(var->string);
 
@@ -1275,6 +1288,8 @@ void CV_LoadNetVars(UINT8 **p)
 	serverloading = false;
 }
 
+static void CV_SetCVar(consvar_t *var, const char *value, boolean stealth);
+
 void CV_ResetCheatNetVars(void)
 {
 	consvar_t *cvar;
@@ -1282,7 +1297,7 @@ void CV_ResetCheatNetVars(void)
 	// Stealthset everything back to default.
 	for (cvar = consvar_vars; cvar; cvar = cvar->next)
 		if (cvar->flags & CV_CHEAT)
-			Setvalue(cvar, cvar->defaultvalue, true);
+			CV_SetCVar(cvar, cvar->defaultvalue, true);
 }
 
 // Returns true if the variable's current value is its default value
@@ -1419,11 +1434,7 @@ void CV_AddValue(consvar_t *var, INT32 increment)
 	INT32 newvalue, max;
 
 	// count pointlimit better
-	if (var == &cv_pointlimit && (gametype == GT_MATCH
-#ifdef CHAOSISNOTDEADYET
-		|| gametype == GT_CHAOS
-#endif
-		))
+	if (var == &cv_pointlimit && (gametype == GT_MATCH))
 		increment *= 50;
 	newvalue = var->value + increment;
 

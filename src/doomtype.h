@@ -100,9 +100,9 @@ typedef long ssize_t;
 
 #if defined (_MSC_VER) || defined (__OS2__)
 	// Microsoft VisualC++
-#ifdef _MSC_VER
+#if (_MSC_VER <= 1800) // MSVC 2013 and back
 	#define snprintf                _snprintf
-#if (_MSC_VER <= 1200)
+#if (_MSC_VER <= 1200) // MSVC 2012 and back
 	#define vsnprintf               _vsnprintf
 #endif
 #endif
@@ -307,7 +307,11 @@ typedef UINT32 tic_t;
 #define FUNCTARGET(X)  __attribute__ ((__target__ (X)))
 #endif
 #endif
+#if defined (__MINGW32__) && ((__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+#define ATTRPACK __attribute__((packed, gcc_struct))
+#else
 #define ATTRPACK __attribute__((packed))
+#endif
 #define ATTRUNUSED __attribute__((unused))
 #ifdef _XBOX
 #define FILESTAMP I_OutputMsg("%s:%d\n",__FILE__,__LINE__);

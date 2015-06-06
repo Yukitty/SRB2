@@ -588,7 +588,7 @@ void Y_Ticker(void)
 		return;
 
 	// Check for pause or menu up in single player
-	if (paused || P_MenuActivePause())
+	if (paused || P_AutoPause())
 		return;
 
 	intertic++;
@@ -770,11 +770,12 @@ void Y_Ticker(void)
 }
 
 //
-// Y_UpdateReplays
+// Y_UpdateRecordReplays
 //
-// Update replay files/data, etc
+// Update replay files/data, etc. for Record Attack
+// See G_SetNightsRecords for NiGHTS Attack.
 //
-static void Y_UpdateReplays(void)
+static void Y_UpdateRecordReplays(void)
 {
 	const size_t glen = strlen(srb2home)+1+strlen("replay")+1+strlen(timeattackfolder)+1+strlen("MAPXX")+1;
 	char *gpath;
@@ -906,11 +907,7 @@ void Y_StartIntermission(void)
 			intertype = int_teammatch;
 		else if (gametype == GT_MATCH
 		 || gametype == GT_TAG
-		 || gametype == GT_HIDEANDSEEK
-#ifdef CHAOSISNOTDEADYET
-		 || gametype == GT_CHAOS
-#endif
-		)
+		 || gametype == GT_HIDEANDSEEK)
 			intertype = int_match;
 		else if (gametype == GT_RACE)
 			intertype = int_race;
@@ -962,7 +959,7 @@ void Y_StartIntermission(void)
 					mapvisited[gamemap-1] |= MV_PERFECT;
 
 				if (modeattacking == ATTACKING_RECORD)
-					Y_UpdateReplays();
+					Y_UpdateRecordReplays();
 			}
 
 			for (i = 0; i < 4; ++i)

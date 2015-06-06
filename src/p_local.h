@@ -144,7 +144,7 @@ void P_GivePlayerLives(player_t *player, INT32 numlives);
 UINT8 P_GetNextEmerald(void);
 void P_GiveEmerald(boolean spawnObj);
 void P_ResetScore(player_t *player);
-boolean P_MenuActivePause(void);
+boolean P_AutoPause(void);
 
 void P_DoJumpShield(player_t *player);
 void P_BlackOw(player_t *player);
@@ -372,6 +372,10 @@ void P_DoNightsScore(player_t *player);
 #include "p_spec.h"
 
 extern INT32 ceilmovesound;
+
+// Factor to scale scrolling effect into mobj-carrying properties = 3/32.
+// (This is so scrolling floors and objects on them can move at same speed.)
+#define CARRYFACTOR ((3*FRACUNIT)/32)
 
 void P_MixUp(mobj_t *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 			INT16 starpostx, INT16 starposty, INT16 starpostz,

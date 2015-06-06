@@ -39,7 +39,7 @@
 #ifdef DEBUG_TO_FILE
 static unsigned long nb_frames = 0;
 static clock_t my_clock;
-FILE *logstream;
+FILE *gllogstream;
 #endif
 
 static  HDC     hDC           = NULL;       // the window's device context
@@ -81,8 +81,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, // handle to DLL module
 			// Initialize once for each new process.
 			// Return FALSE to fail DLL load.
 #ifdef DEBUG_TO_FILE
-			logstream = fopen("ogllog.txt", "wt");
-			if (logstream == NULL)
+			gllogstream = fopen("ogllog.txt", "wt");
+			if (gllogstream == NULL)
 				return FALSE;
 #endif
 			DisableThreadLibraryCalls(hinstDLL);
@@ -99,10 +99,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, // handle to DLL module
 		case DLL_PROCESS_DETACH:
 			// Perform any necessary cleanup.
 #ifdef DEBUG_TO_FILE
-			if (logstream)
+			if (gllogstream)
 			{
-				fclose(logstream);
-				logstream  = NULL;
+				fclose(gllogstream);
+				gllogstream  = NULL;
 			}
 #endif
 			break;
@@ -366,6 +366,7 @@ static INT32 WINAPI SetRes(viddef_t *lvid, vmode_t *pcurrentmode)
 	else
 		maximumAnisotropy = 0;
 
+	SetupGLFunc13();
 
 	screen_depth = (GLbyte)(lvid->bpp*8);
 	if (screen_depth > 16)
