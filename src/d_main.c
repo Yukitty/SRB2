@@ -862,7 +862,6 @@ static void IdentifyVersion(void)
 	D_AddFile("srb2.wad");
 	D_AddFile("zones.wad");
 	D_AddFile("player.wad");
-	D_AddFile("rings.wad");
 #else
 
 	char *srb2wad1, *srb2wad2;
