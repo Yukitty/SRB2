@@ -1315,9 +1315,7 @@ void D_SRB2Main2(void)
 	boolean autostart = false;
 #endif
 
-#ifdef __EMSCRIPTEN__
-	mainwads = 4;
-#else
+#ifndef __EMSCRIPTEN__
 #if 1 // md5s last updated 8/05/14
 
 	// Check MD5s of autoloaded files
@@ -1325,7 +1323,7 @@ void D_SRB2Main2(void)
 	W_VerifyFileMD5(1, "f39b6c849295e3c81875726e8cc0e2c7"); // zones.dta
 	W_VerifyFileMD5(2, "cfca0f1c73023cbbd8f844f45480f799"); // player.dta
 	W_VerifyFileMD5(3, "85901ad4bf94637e5753d2ac2c03ea26"); // rings.dta
-	W_VerifyFileMD5(4, "3d6cfc185fd7c195eb934ce593b0248f"); // patch.dta
+	//W_VerifyFileMD5(4, "3d6cfc185fd7c195eb934ce593b0248f"); // patch.dta
 	// don't check music.dta because people like to modify it, and it doesn't matter if they do
 	// ...except it does if they slip maps in there, and that's what W_VerifyNMUSlumps is for.
 #endif
