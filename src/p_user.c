@@ -3987,11 +3987,13 @@ static void P_DoJumpStuff(player_t *player, ticcmd_t *cmd)
 
 	if (cmd->buttons & BT_USE && !(player->pflags & PF_JUMPDOWN) && !player->exiting && !P_PlayerInPain(player))
 	{
-		if (onground || player->climbing || player->pflags & (PF_CARRIED|PF_ITEMHANG|PF_ROPEHANG))
-		{}
-		else if (player->pflags & PF_MACESPIN && player->mo->tracer)
-		{}
-		else if (!(player->pflags & PF_SLIDING) && ((gametype != GT_CTF) || (!player->gotflag)))
+		if (onground || player->climbing || player->pflags & (PF_CARRIED|PF_ITEMHANG|PF_ROPEHANG|PF_SLIDING)
+		|| (player->pflags & PF_MACESPIN && player->mo->tracer))
+			;
+		else if ((player->powers[pw_shield] & SH_NOSTACK) == SH_JUMP
+		&& !(player->pflags & PF_JUMPED))
+			P_DoJumpShield(player);
+		else if (gametype != GT_CTF || !player->gotflag)
 		{
 #ifdef HAVE_BLUA
 			if (!LUAh_JumpSpinSpecial(player))
@@ -6917,14 +6919,31 @@ static void P_MovePlayer(player_t *player)
 	}
 
 	// HOMING option.
-	if (player->charability == CA_HOMINGTHOK
-	|| (player->powers[pw_shield] & SH_NOSTACK) == SH_ATTRACT)
+	if ((player->powers[pw_shield] & SH_NOSTACK) == SH_ATTRACT
+	&& player->pflags & PF_SHIELDABILITY)
+	{
+		if (player->homing && player->mo->tracer)
+		{
+			P_HomingAttack(player->mo, player->mo->tracer);
+			if (player->mo->tracer->health <= 0 || (player->mo->tracer->flags2 & MF2_FRET))
+			{
+				P_SetObjectMomZ(player->mo, 6*FRACUNIT, false);
+				if (player->mo->eflags & MFE_UNDERWATER)
+					player->mo->momz = FixedMul(player->mo->momz, FRACUNIT/3);
+				player->homing = 0;
+			}
+		}
+
+		// If you're not jumping, then you obviously wouldn't be homing.
+		if (!(player->pflags & PF_JUMPED))
+			player->homing = 0;
+	}
+	else if (player->charability == CA_HOMINGTHOK)
 	{
 		// If you've got a target, chase after it!
 		if (player->homing && player->mo->tracer)
 		{
-			if (!(player->pflags & PF_SHIELDABILITY))
-				P_SpawnThokMobj(player);
+			P_SpawnThokMobj(player);
 			P_HomingAttack(player->mo, player->mo->tracer);
 
 			// But if you don't, then stop homing.
@@ -6940,7 +6959,7 @@ static void P_MovePlayer(player_t *player)
 				if (player->mo->tracer->flags2 & MF2_FRET)
 					P_InstaThrust(player->mo, player->mo->angle, -(player->speed>>3));
 
-				if (!(player->pflags & PF_SHIELDABILITY) && !(player->mo->tracer->flags & MF_BOSS))
+				if (!(player->mo->tracer->flags & MF_BOSS))
 					player->pflags &= ~PF_THOKKED;
 			}
 		}
@@ -7640,7 +7659,7 @@ void P_HomingAttack(mobj_t *source, mobj_t *enemy) // Home in on your target
 		if (source->player->charability == CA_HOMINGTHOK && !(source->player->pflags & PF_SHIELDABILITY))
 			ns = FixedDiv(FixedMul(source->player->actionspd, source->scale), 3*FRACUNIT/2);
 		else
-			ns = FixedMul(80*FRACUNIT, source->scale);
+			ns = FixedMul(45*FRACUNIT, source->scale);
 	}
 
 	source->momx = FixedMul(FixedDiv(enemy->x - source->x, dist), ns);
