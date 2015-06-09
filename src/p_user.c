@@ -3541,14 +3541,35 @@ static void P_DoSuperStuff(player_t *player)
 
 			if (player->mo->health > 0)
 			{
-				if ((player->pflags & PF_JUMPED) || (player->pflags & PF_SPINNING))
+				if ((player->pflags & PF_JUMPED || player->pflags & PF_SPINNING)
+				&& player->mo->state-states != S_PLAY_DASH)
 					P_SetPlayerMobjState(player->mo, S_PLAY_SPIN);
-				else if (player->panim == PA_RUN)
-					P_SetPlayerMobjState(player->mo, S_PLAY_RUN);
-				else if (player->panim == PA_WALK)
-					P_SetPlayerMobjState(player->mo, S_PLAY_WALK);
-				else
+				else switch (player->mo->state-states)
+				{
+				default:
 					P_SetPlayerMobjState(player->mo, S_PLAY_STND);
+					break;
+				case S_PLAY_DASH:
+					break;
+				case S_PLAY_SUPER_WALK:
+					P_SetPlayerMobjState(player->mo, S_PLAY_WALK);
+					break;
+				case S_PLAY_SUPER_RUN:
+					P_SetPlayerMobjState(player->mo, S_PLAY_RUN);
+					break;
+				case S_PLAY_SUPER_PAIN:
+					P_SetPlayerMobjState(player->mo, S_PLAY_PAIN);
+					break;
+				case S_PLAY_SUPER_JUMP:
+					P_SetPlayerMobjState(player->mo, S_PLAY_JUMP);
+					break;
+				case S_PLAY_SUPER_FALL:
+					P_SetPlayerMobjState(player->mo, S_PLAY_FALL);
+					break;
+				case S_PLAY_SUPER_RIDE:
+					P_SetPlayerMobjState(player->mo, S_PLAY_RIDE);
+					break;
+				}
 
 				if (!player->exiting)
 				{
@@ -3799,7 +3820,7 @@ static void P_DoSpinDash(player_t *player, ticcmd_t *cmd)
 			player->pflags |= PF_STARTDASH|PF_SPINNING;
 			player->dashspeed = FixedMul(FRACUNIT, player->mo->scale);
 			player->dashtime = 0;
-			P_SetPlayerMobjState(player->mo, S_PLAY_SPIN);
+			P_SetPlayerMobjState(player->mo, S_PLAY_DASH);
 			player->pflags |= PF_USEDOWN;
 		}
 		else if ((cmd->buttons & BT_USE) && (player->pflags & PF_STARTDASH))
@@ -3812,9 +3833,12 @@ static void P_DoSpinDash(player_t *player, ticcmd_t *cmd)
 					S_StartSound(player->mo, sfx_spndsh); // Make the rev sound!
 
 				// Now spawn the color thok circle.
-				P_SpawnSpinMobj(player, player->revitem);
-				if (demorecording)
-					G_GhostAddRev();
+				if (player->mo->sprite2 != SPR2_DASH)
+				{
+					P_SpawnSpinMobj(player, player->revitem);
+					if (demorecording)
+						G_GhostAddRev();
+				}
 			}
 		}
 		// If not moving up or down, and travelling faster than a speed of four while not holding
@@ -3864,6 +3888,7 @@ static void P_DoSpinDash(player_t *player, ticcmd_t *cmd)
 		player->pflags &= ~PF_STARTDASH;
 		if (!((gametype == GT_RACE || gametype == GT_COMPETITION) && leveltime < 4*TICRATE))
 		{
+			P_SetPlayerMobjState(player->mo, S_PLAY_SPIN);
 			P_InstaThrust(player->mo, player->mo->angle, player->dashspeed); // catapult forward ho!!
 			if (!player->spectator)
 				S_StartSound(player->mo, sfx_zoom);
@@ -3871,7 +3896,9 @@ static void P_DoSpinDash(player_t *player, ticcmd_t *cmd)
 		player->dashspeed = 0;
 	}
 
-	if (onground && (player->pflags & PF_SPINNING) && !(player->panim == PA_ROLL))
+	if (onground && player->pflags & PF_STARTDASH && player->mo->state-states != S_PLAY_DASH)
+		P_SetPlayerMobjState(player->mo, S_PLAY_DASH);
+	else if (onground && player->pflags & PF_SPINNING && !(player->panim == PA_ROLL))
 		P_SetPlayerMobjState(player->mo, S_PLAY_SPIN);
 }
 
@@ -6504,10 +6531,10 @@ static void P_MovePlayer(player_t *player)
 		P_SetPlayerMobjState(player->mo, S_PLAY_WALK);
 
 	// If Springing, but travelling DOWNWARD, change back!
-	if (player->mo->state == &states[S_PLAY_JUMP] && P_MobjFlip(player->mo)*player->mo->momz < 0)
+	if (player->panim == PA_JUMP && P_MobjFlip(player->mo)*player->mo->momz < 0)
 		P_SetPlayerMobjState(player->mo, S_PLAY_FALL);
 	// If Springing but on the ground, change back!
-	else if (onground && (player->mo->state == &states[S_PLAY_JUMP] || player->panim == PA_FALL || player->mo->state == &states[S_PLAY_RIDE]) && !player->mo->momz)
+	else if (onground && (player->panim == PA_JUMP || player->panim == PA_FALL || player->panim == PA_RIDE) && !player->mo->momz)
 		P_SetPlayerMobjState(player->mo, S_PLAY_STND);
 
 	// If you are stopped and are still walking, stand still!
