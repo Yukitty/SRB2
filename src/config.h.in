@@ -12,10 +12,8 @@
 #ifdef CMAKECONFIG
 
 #define ASSET_HASH_SRB2_SRB   "${SRB2_ASSET_srb2.srb_HASH}"
-#define ASSET_HASH_PLAYER_DTA "${SRB2_ASSET_player.dta_HASH}"
-#define ASSET_HASH_RINGS_DTA  "${SRB2_ASSET_rings.dta_HASH}"
+#define ASSET_HASH_SRB2JTE    "${SRB2_ASSET_srb2jte.wad_HASH}"
 #define ASSET_HASH_ZONES_DTA  "${SRB2_ASSET_zones.dta_HASH}"
-#define ASSET_HASH_PATCH_DTA  "${SRB2_ASSET_patch.dta_HASH}"
 
 #define SRB2_COMP_REVISION    "${SRB2_COMP_REVISION}"
 #define SRB2_GIT_DESCRIBE     "${SRB2_GIT_DESCRIBE}"

@@ -824,17 +824,11 @@ static void IdentifyVersion(void)
 	// if you change the ordering of this or add/remove a file, be sure to update the md5
 	// checking in D_SRB2Main
 
+	// Add the players
+	D_AddFile(va(pandf,srb2waddir, "srb2jte.wad"));
+
 	// Add the maps
 	D_AddFile(va(pandf,srb2waddir,"zones.dta"));
-
-	// Add the players
-	D_AddFile(va(pandf,srb2waddir, "player.dta"));
-
-	// Add the weapons
-	D_AddFile(va(pandf,srb2waddir,"rings.dta"));
-
-	// Add our crappy patches to fix our bugs
-	// D_AddFile(va(pandf,srb2waddir,"patch.dta"));
 
 #if !defined (HAVE_SDL) || defined (HAVE_MIXER)
 	{
@@ -1122,15 +1116,13 @@ void D_SRB2Main(void)
 
 	// Check MD5s of autoloaded files
 	W_VerifyFileMD5(0, ASSET_HASH_SRB2_SRB); // srb2.srb/srb2.wad
-	W_VerifyFileMD5(1, ASSET_HASH_ZONES_DTA); // zones.dta
-	W_VerifyFileMD5(2, ASSET_HASH_PLAYER_DTA); // player.dta
-	W_VerifyFileMD5(3, ASSET_HASH_RINGS_DTA); // rings.dta
-	//W_VerifyFileMD5(4, "0c66790502e648bfce90fdc5bb15722e"); // patch.dta
+	W_VerifyFileMD5(1, ASSET_HASH_SRB2JTE); // srb2jte.wad
+	W_VerifyFileMD5(2, ASSET_HASH_ZONES_DTA); // zones.dta
 	// don't check music.dta because people like to modify it, and it doesn't matter if they do
 	// ...except it does if they slip maps in there, and that's what W_VerifyNMUSlumps is for.
 #endif
 
-	mainwads = 4; // there are 5 wads not to unload
+	mainwads = 4;
 
 	cht_Init();
 

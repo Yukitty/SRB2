@@ -3,19 +3,15 @@
 # MD5 generation
 set(SRB2_ASSET_ALL
 	${CMAKE_CURRENT_SOURCE_DIR}/srb2.srb
-	${CMAKE_CURRENT_SOURCE_DIR}/player.dta
-	${CMAKE_CURRENT_SOURCE_DIR}/rings.dta
+	${CMAKE_CURRENT_SOURCE_DIR}/srb2jte.wad
 	${CMAKE_CURRENT_SOURCE_DIR}/zones.dta
-	${CMAKE_CURRENT_SOURCE_DIR}/patch.dta
 	${CMAKE_CURRENT_SOURCE_DIR}/music.dta
 )
 
 set(SRB2_ASSET_HASHED
 	srb2.srb
-	player.dta
-	rings.dta
+	srb2jte.wad
 	zones.dta
-	patch.dta
 )
 
 foreach(SRB2_ASSET ${SRB2_ASSET_HASHED})
