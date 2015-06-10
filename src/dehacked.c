@@ -3028,7 +3028,7 @@ static void readmaincfg(MYFILE *f)
 				timeattackfolder[min(filenamelen, sizeof (timeattackfolder) - 1)] = '\0';
 
 				strncpy(savegamename, timeattackfolder, sizeof (timeattackfolder));
-				strlcat(savegamename, "%u.ssg", sizeof(savegamename));
+				strlcat(savegamename, "%u.jte", sizeof(savegamename));
 
 				gamedataadded = true;
 			}

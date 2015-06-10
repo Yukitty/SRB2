@@ -967,7 +967,7 @@ void D_SRB2Main(void)
 		CONS_Printf(M_GetText("Development mode ON.\n"));
 
 	// default savegame
-	strcpy(savegamename, SAVEGAMENAME"%u.ssg");
+	strcpy(savegamename, SAVEGAMENAME"%u.jte");
 
 	{
 		const char *userhome = D_Home(); //Alam: path to home
