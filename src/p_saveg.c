@@ -1377,6 +1377,10 @@ static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
 	UINT32 diff;
 	UINT16 diff2;
 
+	// Emblems are client-side
+	if (mobj->type == MT_EMBLEM)
+		return;
+
 	// Ignore stationary hoops - these will be respawned from mapthings.
 	if (mobj->type == MT_HOOP)
 		return;
@@ -3777,7 +3781,7 @@ static void P_RelinkPointers(void)
 
 		mobj = (mobj_t *)currentthinker;
 
-		if (mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		if (mobj->type == MT_EMBLEM || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
 			continue;
 
 		if (mobj->tracer)
@@ -3936,6 +3940,8 @@ static void P_NetUnArchiveSpecials(void)
 
 	if (READUINT8(save_p) == 0x01) // metal sonic
 		G_LoadMetal(&save_p);
+
+	P_LoadEmblems();
 }
 
 // =======================================================================
@@ -4216,7 +4222,7 @@ void P_SaveNetGame(void)
 			continue;
 
 		mobj = (mobj_t *)th;
-		if (mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		if (mobj->type == MT_EMBLEM || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
 			continue;
 		mobj->mobjnum = i++;
 	}
