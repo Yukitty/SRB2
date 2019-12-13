@@ -725,7 +725,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 		// Secret emblem thingy
 		case MT_EMBLEM:
 			{
-				if (demoplayback || player->bot)
+				if (demoplayback || player->bot || !P_IsLocalPlayer(player))
 					return;
 				emblemlocations[special->health-1].collected = true;
 
