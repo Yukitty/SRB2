@@ -3254,8 +3254,29 @@ void G_UpdateVisited(void)
 			G_UpdateRecordReplays();
 		else if (modeattacking == ATTACKING_NIGHTS)
 			G_SetNightsRecords();
+		else
+		{
+			// Save your clear time regardless of record attack, in co-op, race, or competition mode.
+			boolean newrecord = false;
+			if (!mainrecords[gamemap-1])
+				G_AllocMainRecordData(gamemap-1);
+			if (mainrecords[gamemap-1]->time == 0 || players[consoleplayer].realtime < mainrecords[gamemap-1]->time)
+			{
+				mainrecords[gamemap-1]->time = players[consoleplayer].realtime;
+				newrecord = true;
+			}
+			if (splitscreen && players[secondarydisplayplayer].realtime < mainrecords[gamemap-1]->time)
+			{
+				mainrecords[gamemap-1]->time = players[secondarydisplayplayer].realtime;
+				newrecord = true;
+			}
+			if (newrecord)
+			{
+				CONS_Printf("\x83%s\x80\n", M_GetText("NEW RECORD TIME!"));
+			}
+		}
 
-		if ((earnedEmblems = M_CompletionEmblems()))
+		if ((earnedEmblems = M_CompletionEmblems() + M_CheckLevelEmblems()))
 			CONS_Printf(M_GetText("\x82" "Earned %hu emblem%s for level completion.\n"), (UINT16)earnedEmblems, earnedEmblems > 1 ? "s" : "");
 
 		M_UpdateUnlockablesAndExtraEmblems();
