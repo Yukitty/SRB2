@@ -2212,6 +2212,9 @@ void P_DoPlayerExit(player_t *player)
 	player->powers[pw_underwater] = 0;
 	player->powers[pw_spacetime] = 0;
 	P_RestoreMusic(player);
+
+	if (P_IsLocalPlayer(player))
+		G_UpdateVisited();
 }
 
 #define SPACESPECIAL 12

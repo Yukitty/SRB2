@@ -3246,10 +3246,8 @@ boolean P_SetupLevel(boolean skipprecip)
 	nextmapoverride = 0;
 	skipstats = 0;
 
-	if (!(netgame || multiplayer) && (!modifiedgame || savemoddata))
+	if (!modifiedgame || savemoddata)
 		mapvisited[gamemap-1] |= MV_VISITED;
-	else
-		mapvisited[gamemap-1] |= MV_MP; // you want to record that you've been there this session, but not permanently
 
 	levelloading = false;
 
