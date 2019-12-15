@@ -69,6 +69,7 @@ typedef enum
 #ifdef ESLOPE
 	THINK_DYNSLOPE,
 #endif
+	THINK_LOCALMOBJ,
 	THINK_PRECIP,
 	NUM_THINKERLISTS
 } thinklistnum_t; /**< Thinker lists. */

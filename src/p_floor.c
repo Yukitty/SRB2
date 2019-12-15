@@ -1797,6 +1797,7 @@ static mobj_t *SearchMarioNode(msecnode_t *node)
 #ifdef SEENAMES
 		case MT_NAMECHECK: // DEFINITELY not this, because it is client-side.
 #endif
+		case MT_EMBLEM: // Sorry secrets-inside-mario-blocks, this is necessary for online desync.
 			continue;
 		default:
 			break;

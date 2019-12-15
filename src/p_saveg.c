@@ -1377,21 +1377,20 @@ static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
 	UINT32 diff;
 	UINT16 diff2;
 
-	// Emblems are client-side
-	if (mobj->type == MT_EMBLEM)
+	switch(mobj->type)
+	{
+	case MT_EMBLEM: // Emblems are client-side
+	case MT_LOCKON: // Lockon indicators are client-side
+	case MT_LOCKONINF:
+	case MT_HOOP: // Ignore stationary hoops - these will be respawned from mapthings.
+	case MT_HOOPCOLLIDE: // These are NEVER saved.
 		return;
-
-	// Ignore stationary hoops - these will be respawned from mapthings.
-	if (mobj->type == MT_HOOP)
-		return;
-
-	// These are NEVER saved.
-	if (mobj->type == MT_HOOPCOLLIDE)
-		return;
-
-	// This hoop has already been collected.
-	if (mobj->type == MT_HOOPCENTER && mobj->threshold == 4242)
-		return;
+	case MT_HOOPCENTER:
+		if (mobj->threshold == 4242) // This hoop has already been collected.
+			return;
+	default:
+		break;
+	}
 
 	if (mobj->spawnpoint && mobj->info->doomednum != -1)
 	{
@@ -3781,8 +3780,18 @@ static void P_RelinkPointers(void)
 
 		mobj = (mobj_t *)currentthinker;
 
-		if (mobj->type == MT_EMBLEM || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		switch(mobj->type)
+		{
+		case MT_EMBLEM:
+		case MT_LOCKON:
+		case MT_LOCKONINF:
+		case MT_HOOP:
+		case MT_HOOPCOLLIDE:
+		case MT_HOOPCENTER:
 			continue;
+		default:
+			break;
+		}
 
 		if (mobj->tracer)
 		{
@@ -4222,8 +4231,18 @@ void P_SaveNetGame(void)
 			continue;
 
 		mobj = (mobj_t *)th;
-		if (mobj->type == MT_EMBLEM || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		switch(mobj->type)
+		{
+		case MT_EMBLEM:
+		case MT_LOCKON:
+		case MT_LOCKONINF:
+		case MT_HOOP:
+		case MT_HOOPCOLLIDE:
+		case MT_HOOPCENTER:
 			continue;
+		default:
+			break;
+		}
 		mobj->mobjnum = i++;
 	}
 

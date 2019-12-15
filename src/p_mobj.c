@@ -10663,7 +10663,20 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 	}
 
 	if (!(mobj->flags & MF_NOTHINK))
-		P_AddThinker(THINK_MOBJ, &mobj->thinker);
+	{
+		switch (mobj->type)
+		{
+		case MT_HOOP:
+		case MT_LOCKON:
+		case MT_LOCKONINF:
+		case MT_EMBLEM:
+			P_AddThinker(THINK_LOCALMOBJ, &mobj->thinker);
+			break;
+		default:
+			P_AddThinker(THINK_MOBJ, &mobj->thinker);
+			break;
+		}
+	}
 
 	if (mobj->skin) // correct inadequecies above.
 	{
