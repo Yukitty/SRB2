@@ -765,6 +765,10 @@ static boolean PIT_CheckThing(mobj_t *thing)
 	}
 #endif
 
+	/// \todo Emblems need to be able to get sucked up by NiGHTS
+	if (P_IsThingLocal(tmthing))
+		return false;
+
 	// Metal Sonic destroys tiny baby objects.
 	if (tmthing->type == MT_METALSONIC_RACE
 	&& (thing->flags & (MF_MISSILE|MF_ENEMY|MF_BOSS)

@@ -1590,6 +1590,31 @@ fixed_t P_GetMobjGravity(mobj_t *mo)
 }
 
 //
+// P_IsThingLocal
+//
+// Checks if the given mobj
+// is a local-only thing.
+//
+boolean P_IsThingLocal(const mobj_t *mo)
+{
+	I_Assert(mo);
+	switch (mo->type)
+	{
+	case MT_HOOP:
+	case MT_LOCKON:
+	case MT_EMBLEM:
+#ifdef SEENAMES
+	case MT_NAMECHECK:
+#endif
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
+
+
+//
 // P_CheckGravity
 //
 // Checks the current gravity state
@@ -10664,18 +10689,10 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 
 	if (!(mobj->flags & MF_NOTHINK))
 	{
-		switch (mobj->type)
-		{
-		case MT_HOOP:
-		case MT_LOCKON:
-		case MT_LOCKONINF:
-		case MT_EMBLEM:
+		if (P_IsThingLocal(mobj))
 			P_AddThinker(THINK_LOCALMOBJ, &mobj->thinker);
-			break;
-		default:
+		else
 			P_AddThinker(THINK_MOBJ, &mobj->thinker);
-			break;
-		}
 	}
 
 	if (mobj->skin) // correct inadequecies above.
