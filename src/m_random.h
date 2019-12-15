@@ -23,6 +23,7 @@
 
 // M_Random functions pull random numbers of various types that aren't network synced.
 // P_Random functions pulls random bytes from a PRNG that is network synced.
+// A_Random functions call M_Random or P_Random functions based on the clientside flag set on a mobj.
 
 // RNG functions
 fixed_t M_RandomFixed(void);
@@ -47,12 +48,20 @@ INT32   P_RandomKey(INT32 a);
 INT32   P_RandomRange(INT32 a, INT32 b);
 #endif
 
+// ARNG functions
+#define A_RandomFixed(a) (a->local ? M_RandomFixed() : P_RandomFixed())
+#define A_RandomByte(a) (a->local ? M_RandomByte() : P_RandomByte())
+#define A_RandomKey(a, c) (a->local ? M_RandomKey(c) : P_RandomKey(c))
+#define A_RandomRange(a, c, d) (a->local ? M_RandomRange(c, d) : P_RandomRange(c, d))
+
 // Macros for other functions
 #define M_SignedRandom()  ((INT32)M_RandomByte() - 128) // [-128, 127] signed byte, originally a
 #define P_SignedRandom()  ((INT32)P_RandomByte() - 128) // function of its own, moved to a macro
+#define A_SignedRandom(a) (a->local ? M_SignedRandom() : P_SignedRandom())
 
 #define M_RandomChance(p) (M_RandomFixed() < p) // given fixed point probability, p, between 0 (0%)
 #define P_RandomChance(p) (P_RandomFixed() < p) // and FRACUNIT (100%), returns true p% of the time
+#define A_RandomChance(a, p) (a->local ? M_RandomChance(p) : P_RandomChance(p))
 
 // Debugging
 fixed_t P_RandomPeek(void);

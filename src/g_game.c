@@ -5246,7 +5246,7 @@ void G_GhostTicker(void)
 					|| !(mobjinfo[type].flags & (MF_ENEMY|MF_MONITOR))
 					|| health != 0 || i >= 4) // only spawn for the first 4 hits per frame, to prevent ghosts from splode-spamming too bad.
 						continue;
-					poof = P_SpawnMobj(x, y, z, MT_GHOST);
+					poof = P_SpawnMobj(x, y, z, MT_GHOST, true);
 					poof->angle = angle;
 					poof->flags = MF_NOBLOCKMAP|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY; // make an ATTEMPT to curb crazy SOCs fucking stuff up...
 					poof->health = 0;
@@ -6576,7 +6576,7 @@ void G_AddGhost(char *defdemoname)
 	I_Assert(mthing);
 	{ // A bit more complex than P_SpawnPlayer because ghosts aren't solid and won't just push themselves out of the ceiling.
 		fixed_t z,f,c;
-		gh->mo = P_SpawnMobj(mthing->x << FRACBITS, mthing->y << FRACBITS, 0, MT_GHOST);
+		gh->mo = P_SpawnMobj(mthing->x << FRACBITS, mthing->y << FRACBITS, 0, MT_GHOST, true);
 		gh->mo->angle = FixedAngle(mthing->angle*FRACUNIT);
 		f = gh->mo->floorz;
 		c = gh->mo->ceilingz - mobjinfo[MT_PLAYER].height;

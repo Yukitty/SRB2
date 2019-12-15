@@ -177,7 +177,7 @@ void P_DoNightsScore(player_t *player)
 	if (player->exiting)
 		return; // Don't do any fancy shit for failures.
 
-	dummymo = P_SpawnMobj(player->mo->x, player->mo->y, player->mo->z+player->mo->height/2, MT_NIGHTSCORE);
+	dummymo = P_SpawnMobj(player->mo->x, player->mo->y, player->mo->z+player->mo->height/2, MT_NIGHTSCORE, false);
 	if (player->bot)
 		player = &players[consoleplayer];
 
@@ -1203,7 +1203,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 			if (!G_IsSpecialStage(gamemap))
 			{
 				// A flicky orbits us now
-				mobj_t *flickyobj = P_SpawnMobj(toucher->x, toucher->y, toucher->z + toucher->info->height, MT_NIGHTOPIANHELPER);
+				mobj_t *flickyobj = P_SpawnMobj(toucher->x, toucher->y, toucher->z + toucher->info->height, MT_NIGHTOPIANHELPER, false);
 				P_SetTarget(&flickyobj->target, toucher);
 
 				player->powers[pw_nights_helper] = (UINT16)special->info->speed;
@@ -1214,7 +1214,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 				for (i = 0; i < MAXPLAYERS; i++)
 					if (playeringame[i] && players[i].mo && players[i].powers[pw_carry] == CR_NIGHTSMODE) {
 						players[i].powers[pw_nights_helper] = (UINT16)special->info->speed;
-						flickyobj = P_SpawnMobj(players[i].mo->x, players[i].mo->y, players[i].mo->z + players[i].mo->info->height, MT_NIGHTOPIANHELPER);
+						flickyobj = P_SpawnMobj(players[i].mo->x, players[i].mo->y, players[i].mo->z + players[i].mo->info->height, MT_NIGHTOPIANHELPER, false);
 						P_SetTarget(&flickyobj->target, players[i].mo);
 					}
 				if (special->info->deathsound != sfx_None)
@@ -1576,7 +1576,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 
 				if (special->target && special->target->state == &states[S_BLACKEGG_SHOOT1])
 				{
-					if (special->target->health <= 2 && P_RandomChance(FRACUNIT/2))
+					if (special->target->health <= 2 && A_RandomChance(special->target, FRACUNIT/2))
 						P_SetMobjState(special->target, special->target->info->missilestate);
 					else
 						P_SetMobjState(special->target, special->target->info->raisestate);
@@ -1787,7 +1787,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 				special->momz = 0;
 				special->flags |= MF_NOGRAVITY;
 				P_SetMobjState (special, special->info->deathstate);
-				S_StartSound (special, special->info->deathsound+(P_RandomKey(special->info->mass)));
+				S_StartSound (special, special->info->deathsound+(A_RandomKey(special, special->info->mass)));
 			}
 			return;
 
@@ -1809,7 +1809,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 		case MT_MINECARTSPAWNER:
 			if (!player->bot && (special->fuse < TICRATE || player->powers[pw_carry] != CR_MINECART))
 			{
-				mobj_t *mcart = P_SpawnMobj(special->x, special->y, special->z, MT_MINECART);
+				mobj_t *mcart = P_SpawnMobj(special->x, special->y, special->z, MT_MINECART, special->local);
 				P_SetTarget(&mcart->target, toucher);
 				mcart->angle = toucher->angle = player->drawangle = special->angle;
 				mcart->friction = FRACUNIT;
@@ -2356,6 +2356,10 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 {
 	mobj_t *mo;
 
+	// Clientside mobjs cannot kill synchronized mobjs, but they can _be_ killed and kill eachother.
+	if (!target->local && ((inflictor && inflictor->local) || (source && source->local)))
+		return;
+
 	if (inflictor && (inflictor->type == MT_SHELL || inflictor->type == MT_FIREBALL))
 		P_SetTarget(&target->tracer, inflictor);
 
@@ -2444,7 +2448,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 					mobj_t *scoremobj;
 					UINT32 scorestate = mobjinfo[MT_SCORE].spawnstate;
 
-					scoremobj = P_SpawnMobj(target->x, target->y, target->z + (target->height / 2), MT_SCORE);
+					scoremobj = P_SpawnMobj(target->x, target->y, target->z + (target->height / 2), MT_SCORE, target->local);
 
 					// More Sonic-like point system
 					if (!mariomode) switch (locscoreadd)
@@ -2638,9 +2642,9 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 			&& P_AproxDistance(inflictor->x - target->x, inflictor->y - target->y) <= inflictor->radius + target->radius + FixedMul(8*FRACUNIT, inflictor->scale) // close enough?
 			&& inflictor->z <= target->z + target->height + FixedMul(8*FRACUNIT, inflictor->scale)
 			&& inflictor->z + inflictor->height >= target->z - FixedMul(8*FRACUNIT, inflictor->scale))
-				mo = P_SpawnMobj(inflictor->x + inflictor->momx, inflictor->y + inflictor->momy, inflictor->z + (inflictor->height / 2) + inflictor->momz, MT_EXTRALARGEBUBBLE);
+				mo = P_SpawnMobj(inflictor->x + inflictor->momx, inflictor->y + inflictor->momy, inflictor->z + (inflictor->height / 2) + inflictor->momz, MT_EXTRALARGEBUBBLE, target->local);
 			else
-				mo = P_SpawnMobj(target->x, target->y, target->z, MT_EXTRALARGEBUBBLE);
+				mo = P_SpawnMobj(target->x, target->y, target->z, MT_EXTRALARGEBUBBLE, target->local);
 			mo->destscale = target->scale;
 			P_SetScale(mo, mo->destscale);
 			P_SetMobjState(mo, mo->info->raisestate);
@@ -2716,7 +2720,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 					mo->destscale = mo->scale/8;
 					mo->scalespeed = (mo->scale - mo->destscale)/(2*TICRATE);
 					mo->momz = mo->info->speed;
-					mo->angle = FixedAngle((P_RandomKey(36)*10)<<FRACBITS);
+					mo->angle = FixedAngle((A_RandomKey(mo, 36)*10)<<FRACBITS);
 
 					mo2 = P_SpawnMobjFromMobj(mo, 0, 0, 0, MT_BOSSJUNK);
 					mo2->angle = mo->angle;
@@ -2884,7 +2888,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 
 		if (target->info->xdeathstate != S_NULL)
 		{
-			sprflip = P_RandomChance(FRACUNIT/2);
+			sprflip = A_RandomChance(target, FRACUNIT/2);
 
 #define makechunk(angtweak, xmov, ymov) \
 			chunk = P_SpawnMobjFromMobj(target, 0, 0, 0, MT_WALLSPIKE);\
@@ -2897,7 +2901,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 			chunk->y += ymov - forwardyoffs;\
 			P_SetThingPosition(chunk);\
 			P_InstaThrust(chunk, angtweak, 4*scale);\
-			chunk->momz = P_RandomRange(5, 7)*scale;\
+			chunk->momz = A_RandomRange(chunk, 5, 7)*scale;\
 			if (flip)\
 				chunk->momz *= -1;\
 			if (sprflip)\
@@ -2910,7 +2914,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 #undef makechunk
 		}
 
-		sprflip = P_RandomChance(FRACUNIT/2);
+		sprflip = A_RandomChance(target, FRACUNIT/2);
 
 		chunk = P_SpawnMobjFromMobj(target, 0, 0, 0, MT_WALLSPIKE);
 
@@ -2923,7 +2927,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 		chunk->y += forwardyoffs - yoffs;
 		P_SetThingPosition(chunk);
 		P_InstaThrust(chunk, ang + ANGLE_180, 2*scale);
-		chunk->momz = P_RandomRange(5, 7)*scale;
+		chunk->momz = A_RandomRange(chunk, 5, 7)*scale;
 		if (flip)
 			chunk->momz *= -1;
 		if (sprflip)
@@ -2937,7 +2941,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 		target->y += forwardyoffs + yoffs;
 		P_SetThingPosition(target);
 		P_InstaThrust(target, ang, 2*scale);
-		target->momz = P_RandomRange(5, 7)*scale;
+		target->momz = A_RandomRange(target, 5, 7)*scale;
 		if (flip)
 			target->momz *= -1;
 		if (!sprflip)
@@ -3490,6 +3494,10 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 	if (target->health <= 0)
 		return false;
 
+	// Clientside mobjs cannot damage synchronized mobjs, but they can _be_ damaged and damage eachother.
+	if (!target->local && ((inflictor && inflictor->local) || (source && source->local)))
+		return false;
+
 	// Spectator handling
 	if (multiplayer)
 	{
@@ -3704,7 +3712,7 @@ boolean P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, INT32 da
 
 	// Killing dead. Just for kicks.
 	// Require source and inflictor be player.  Don't hurt for firing rings.
-	if (cv_killingdead.value && (source && source->player) && (inflictor && inflictor->player) && P_RandomChance(5*FRACUNIT/16))
+	if (cv_killingdead.value && (source && source->player) && (inflictor && inflictor->player) && A_RandomChance(source, 5*FRACUNIT/16))
 		P_DamageMobj(source, target, target, 1, 0);
 
 	// do the damage
@@ -3798,7 +3806,7 @@ void P_PlayerRingBurst(player_t *player, INT32 num_rings)
 		if (player->mo->eflags & MFE_VERTICALFLIP)
 			z += player->mo->height - mobjinfo[objType].height;
 
-		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, objType);
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, objType, false);
 
 		mo->fuse = 8*TICRATE;
 		P_SetTarget(&mo->target, player->mo);
@@ -3928,7 +3936,7 @@ void P_PlayerWeaponPanelBurst(player_t *player)
 		if (player->mo->eflags & MFE_VERTICALFLIP)
 			z += player->mo->height - mobjinfo[weptype].height;
 
-		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, weptype);
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, weptype, false);
 		mo->reactiontime = ammoamt;
 		mo->flags2 |= MF2_DONTRESPAWN;
 		mo->flags &= ~(MF_NOGRAVITY|MF_NOCLIPHEIGHT);
@@ -4012,7 +4020,7 @@ void P_PlayerWeaponAmmoBurst(player_t *player)
 		if (player->mo->eflags & MFE_VERTICALFLIP)
 			z += player->mo->height - mobjinfo[weptype].height;
 
-		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, weptype);
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, weptype, false);
 		mo->health = player->powers[power];
 		mo->flags2 |= MF2_DONTRESPAWN;
 		mo->flags &= ~(MF_NOGRAVITY|MF_NOCLIPHEIGHT);
@@ -4063,7 +4071,7 @@ void P_PlayerWeaponPanelOrAmmoBurst(player_t *player)
 	{ \
 		player->ringweapons &= ~rwflag; \
 		SETUP_DROP(pickup) \
-		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, pickup); \
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, pickup, false); \
 		mo->reactiontime = 0; \
 		mo->flags2 |= MF2_DONTRESPAWN; \
 		mo->flags &= ~(MF_NOGRAVITY|MF_NOCLIPHEIGHT); \
@@ -4082,7 +4090,7 @@ void P_PlayerWeaponPanelOrAmmoBurst(player_t *player)
 	else if (player->powers[power] > 0) \
 	{ \
 		SETUP_DROP(ammo) \
-		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, ammo); \
+		mo = P_SpawnMobj(player->mo->x, player->mo->y, z, ammo, false); \
 		mo->health = player->powers[power]; \
 		mo->flags2 |= MF2_DONTRESPAWN; \
 		mo->flags &= ~(MF_NOGRAVITY|MF_NOCLIPHEIGHT); \
@@ -4221,7 +4229,7 @@ void P_PlayerEmeraldBurst(player_t *player, boolean toss)
 			else
 				momy = 0;
 
-			mo = P_SpawnMobj(player->mo->x, player->mo->y, z, MT_FLINGEMERALD);
+			mo = P_SpawnMobj(player->mo->x, player->mo->y, z, MT_FLINGEMERALD, false);
 			mo->health = 1;
 			mo->threshold = stoneflag;
 			mo->flags2 |= (MF2_DONTRESPAWN|MF2_SLIDEPUSH);
@@ -4262,7 +4270,7 @@ void P_PlayerFlagBurst(player_t *player, boolean toss)
 	else
 		type = MT_BLUEFLAG;
 
-	flag = P_SpawnMobj(player->mo->x, player->mo->y, player->mo->z, type);
+	flag = P_SpawnMobj(player->mo->x, player->mo->y, player->mo->z, type, false);
 
 	if (player->mo->eflags & MFE_VERTICALFLIP)
 		flag->z += player->mo->height - flag->height;

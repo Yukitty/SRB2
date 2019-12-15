@@ -1377,8 +1377,8 @@ static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
 	UINT32 diff;
 	UINT16 diff2;
 
-	// Emblems are client-side
-	if (mobj->type == MT_EMBLEM)
+	// Don't save client-side mobjs
+	if (mobj->local)
 		return;
 
 	// Ignore stationary hoops - these will be respawned from mapthings.
@@ -1451,9 +1451,9 @@ static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
 		diff |= MD_THRESHOLD;
 	if (mobj->lastlook != -1)
 		diff |= MD_LASTLOOK;
-	if (mobj->target)
+	if (mobj->target && !mobj->target->local)
 		diff |= MD_TARGET;
-	if (mobj->tracer)
+	if (mobj->tracer && !mobj->tracer->local)
 		diff |= MD_TRACER;
 	if (mobj->friction != ORIG_FRICTION)
 		diff |= MD_FRICTION;
@@ -1489,9 +1489,9 @@ static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
 		diff2 |= MD2_EXTVAL1;
 	if (mobj->extravalue2)
 		diff2 |= MD2_EXTVAL2;
-	if (mobj->hnext)
+	if (mobj->hnext && !mobj->hnext->local)
 		diff2 |= MD2_HNEXT;
-	if (mobj->hprev)
+	if (mobj->hprev && !mobj->hprev->local)
 		diff2 |= MD2_HPREV;
 	if (mobj->floorrover)
 		diff2 |= MD2_FLOORROVER;
@@ -3781,7 +3781,7 @@ static void P_RelinkPointers(void)
 
 		mobj = (mobj_t *)currentthinker;
 
-		if (mobj->type == MT_EMBLEM || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		if (mobj->local || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
 			continue;
 
 		if (mobj->tracer)
@@ -3941,7 +3941,7 @@ static void P_NetUnArchiveSpecials(void)
 	if (READUINT8(save_p) == 0x01) // metal sonic
 		G_LoadMetal(&save_p);
 
-	P_LoadEmblems();
+	P_LoadClientsideThings();
 }
 
 // =======================================================================
@@ -4222,7 +4222,7 @@ void P_SaveNetGame(void)
 			continue;
 
 		mobj = (mobj_t *)th;
-		if (mobj->type == MT_EMBLEM || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		if (mobj->local || mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
 			continue;
 		mobj->mobjnum = i++;
 	}

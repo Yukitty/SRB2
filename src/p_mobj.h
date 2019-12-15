@@ -159,7 +159,9 @@ typedef enum
 	MF_GRENADEBOUNCE    = 1<<28,
 	// Run the action thinker on spawn.
 	MF_RUNSPAWNFUNC     = 1<<29,
-	// free: 1<<30 and 1<<31
+	// free: 1<<30
+	// Clientside mobjs call M_Random instead of P_Random and cannot interact with game physics (solidity, sector triggers, etc.)
+	MF_CLIENTSIDE       = 1<<31
 } mobjflag_t;
 
 typedef enum
@@ -377,6 +379,8 @@ typedef struct mobj_s
 #endif
 
 	boolean colorized; // Whether the mobj uses the rainbow colormap
+
+	boolean local; // mobj is clientside
 
 	// WARNING: New fields must be added separately to savegame and Lua.
 } mobj_t;

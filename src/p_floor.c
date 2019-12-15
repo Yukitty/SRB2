@@ -1754,6 +1754,9 @@ static mobj_t *SearchMarioNode(msecnode_t *node)
 	mobj_t *thing = NULL;
 	for (; node; node = node->m_thinglist_next)
 	{
+		// Ignore clientside things.
+		if (node->m_thing->local)
+			continue;
 		// Things which should NEVER be ejected from a MarioBlock, by type.
 		switch (node->m_thing->type)
 		{
@@ -3187,8 +3190,8 @@ void EV_CrumbleChain(sector_t *sec, ffloor_t *rover)
 
 				for (c = topz; c > bottomz; c -= spacing)
 				{
-					spawned = P_SpawnMobj(a, b, c, type);
-					spawned->angle += P_RandomKey(36)*ANG10; // irrelevant for default objects but might make sense for some custom ones
+					spawned = P_SpawnMobj(a, b, c, type, false);
+					spawned->angle += A_RandomKey(spawned, 36)*ANG10; // irrelevant for default objects but might make sense for some custom ones
 
 					if (flags & ML_EFFECT1)
 					{
@@ -3350,7 +3353,7 @@ INT32 EV_StartCrumble(sector_t *sec, ffloor_t *rover, boolean floating,
 	{
 		foundsec = &sectors[i];
 
-		P_SpawnMobj(foundsec->soundorg.x, foundsec->soundorg.y, elevator->direction == 1 ? elevator->sector->floorheight : elevator->sector->ceilingheight, MT_CRUMBLEOBJ);
+		P_SpawnMobj(foundsec->soundorg.x, foundsec->soundorg.y, elevator->direction == 1 ? elevator->sector->floorheight : elevator->sector->ceilingheight, MT_CRUMBLEOBJ, false);
 	}
 
 	return 1;

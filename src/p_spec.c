@@ -1812,6 +1812,10 @@ boolean P_RunTriggerLinedef(line_t *triggerline, mobj_t *actor, sector_t *caller
 	size_t i, linecnt, sectori;
 	INT16 specialtype = triggerline->special;
 
+	// Clientside actors cannot trigger linedef executors.
+	if (actor && actor->local)
+		return false;
+
 	/////////////////////////////////////////////////
 	// Distance-checking/sector trigger conditions //
 	/////////////////////////////////////////////////
@@ -2178,6 +2182,10 @@ boolean P_RunTriggerLinedef(line_t *triggerline, mobj_t *actor, sector_t *caller
 void P_LinedefExecute(INT16 tag, mobj_t *actor, sector_t *caller)
 {
 	size_t masterline;
+
+	// Clientside actors cannot trigger linedef executors.
+	if (actor && actor->local)
+		return;
 
 	CONS_Debug(DBG_GAMELOGIC, "P_LinedefExecute: Executing trigger linedefs of tag %d\n", tag);
 
@@ -3151,7 +3159,7 @@ static void P_ProcessLineSpecial(line_t *line, mobj_t *mo, sector_t *callsec)
 		case 434: // Custom Power
 			if (mo && mo->player)
 			{
-				mobj_t *dummy = P_SpawnMobj(mo->x, mo->y, mo->z, MT_NULL);
+				mobj_t *dummy = P_SpawnMobj(mo->x, mo->y, mo->z, MT_NULL, false);
 
 				var1 = sides[line->sidenum[0]].toptexture; //(line->dx>>FRACBITS)-1;
 
@@ -4005,7 +4013,7 @@ static void P_ProcessLineSpecial(line_t *line, mobj_t *mo, sector_t *callsec)
 					}
 				}
 
-				mobj = P_SpawnMobj(x, y, z, type);
+				mobj = P_SpawnMobj(x, y, z, type, false);
 				if (mobj)
 					CONS_Debug(DBG_GAMELOGIC, "Linedef Type %d - Spawn Object: %d spawned at (%d, %d, %d)\n", line->special, mobj->type, mobj->x>>FRACBITS, mobj->y>>FRACBITS, mobj->z>>FRACBITS); //TODO: Convert mobj->type to a string somehow.
 				else
@@ -4733,7 +4741,7 @@ DoneSection2:
 					else if (players[consoleplayer].ctfteam == 2)
 						S_StartSound(NULL, sfx_lose);
 
-					mo = P_SpawnMobj(player->mo->x,player->mo->y,player->mo->z,MT_BLUEFLAG);
+					mo = P_SpawnMobj(player->mo->x,player->mo->y,player->mo->z,MT_BLUEFLAG,false);
 					player->gotflag &= ~GF_BLUEFLAG;
 					mo->flags &= ~MF_SPECIAL;
 					mo->fuse = TICRATE;
@@ -4766,7 +4774,7 @@ DoneSection2:
 					else if (players[consoleplayer].ctfteam == 1)
 						S_StartSound(NULL, sfx_lose);
 
-					mo = P_SpawnMobj(player->mo->x,player->mo->y,player->mo->z,MT_REDFLAG);
+					mo = P_SpawnMobj(player->mo->x,player->mo->y,player->mo->z,MT_REDFLAG,false);
 					player->gotflag &= ~GF_REDFLAG;
 					mo->flags &= ~MF_SPECIAL;
 					mo->fuse = TICRATE;

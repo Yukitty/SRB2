@@ -490,7 +490,7 @@ static int lib_pSpawnMobj(lua_State *L)
 	INLEVEL
 	if (type >= NUMMOBJTYPES)
 		return luaL_error(L, "mobj type %d out of range (0 - %d)", type, NUMMOBJTYPES-1);
-	LUA_PushUserdata(L, P_SpawnMobj(x, y, z, type), META_MOBJ);
+	LUA_PushUserdata(L, P_SpawnMobj(x, y, z, type, false), META_MOBJ);
 	return 1;
 }
 
@@ -555,7 +555,7 @@ static int lib_pSpawnLockOn(lua_State *L)
 		return luaL_error(L, "state %d out of range (0 - %d)", state, NUMSTATES-1);
 	if (P_IsLocalPlayer(player)) // Only display it on your own view.
 	{
-		mobj_t *visual = P_SpawnMobj(lockon->x, lockon->y, lockon->z, MT_LOCKON); // positioning, flip handled in P_SceneryThinker
+		mobj_t *visual = P_SpawnMobj(lockon->x, lockon->y, lockon->z, MT_LOCKON, true); // positioning, flip handled in P_SceneryThinker
 		P_SetTarget(&visual->target, lockon);
 		visual->flags2 |= MF2_DONTDRAW;
 		P_SetMobjStateNF(visual, state);

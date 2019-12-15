@@ -69,6 +69,7 @@ typedef enum
 #ifdef ESLOPE
 	THINK_DYNSLOPE,
 #endif
+	THINK_LOCALMOBJ,
 	THINK_PRECIP,
 	NUM_THINKERLISTS
 } thinklistnum_t; /**< Thinker lists. */
@@ -267,7 +268,7 @@ extern consvar_t cv_gravity, cv_movebob;
 
 void P_RespawnSpecials(void);
 
-mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
+mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, boolean clientside);
 
 void P_RecalcPrecipInSector(sector_t *sector);
 void P_PrecipitationEffects(void);

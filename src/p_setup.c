@@ -1108,18 +1108,18 @@ static void P_LoadThings(void)
 		if (emer1--)
 			P_SpawnMobj(huntemeralds[emer1]->x<<FRACBITS,
 				huntemeralds[emer1]->y<<FRACBITS,
-				huntemeralds[emer1]->z<<FRACBITS, MT_EMERHUNT);
+				huntemeralds[emer1]->z<<FRACBITS, MT_EMERHUNT, false);
 
 		if (emer2--)
 			P_SetMobjStateNF(P_SpawnMobj(huntemeralds[emer2]->x<<FRACBITS,
 				huntemeralds[emer2]->y<<FRACBITS,
-				huntemeralds[emer2]->z<<FRACBITS, MT_EMERHUNT),
+				huntemeralds[emer2]->z<<FRACBITS, MT_EMERHUNT, false),
 			mobjinfo[MT_EMERHUNT].spawnstate+1);
 
 		if (emer3--)
 			P_SetMobjStateNF(P_SpawnMobj(huntemeralds[emer3]->x<<FRACBITS,
 				huntemeralds[emer3]->y<<FRACBITS,
-				huntemeralds[emer3]->z<<FRACBITS, MT_EMERHUNT),
+				huntemeralds[emer3]->z<<FRACBITS, MT_EMERHUNT, false),
 			mobjinfo[MT_EMERHUNT].spawnstate+2);
 	}
 
@@ -1147,10 +1147,10 @@ static void P_LoadThings(void)
 	}
 }
 
-// Load and place emblems specifically.
-void P_LoadEmblems(void)
+// Load and place clientside things only.
+void P_LoadClientsideThings(void)
 {
-	size_t i;
+	size_t i, j;
 	mapthing_t *mt;
 
 	// Loading the things lump itself into memory is now handled in P_PrepareThings, above
@@ -1158,7 +1158,10 @@ void P_LoadEmblems(void)
 	mt = mapthings;
 	for (i = 0; i < nummapthings; i++, mt++)
 	{
-		if (mt->type == mobjinfo[MT_EMBLEM].doomednum)
+		for (j = 0; j < NUMMOBJTYPES; j++)
+			if (mobjinfo[j].doomednum == mt->type)
+				break;
+		if (j < NUMMOBJTYPES && mobjinfo[j].flags & MF_CLIENTSIDE)
 		{
 			sector_t *mtsector = R_PointInSubsector(mt->x << FRACBITS, mt->y << FRACBITS)->sector;
 
@@ -3105,9 +3108,9 @@ boolean P_SetupLevel(boolean skipprecip)
 #ifndef DEVELOP
 	&& !modifiedgame
 #endif
-	&& !(netgame || multiplayer) && gamemap == 0x1d35-016464)
+	&& gamemap == 0x1d35-016464)
 	{
-		P_SpawnMobj(0640370000, 0x11000000, 0x3180000, MT_LETTER)->angle = ANGLE_90;
+		P_SpawnMobj(0640370000, 0x11000000, 0x3180000, MT_LETTER, true)->angle = ANGLE_90;
 		if (textprompts[199]->page[1].backcolor != 259)
 		{
 			char *buf = W_CacheLumpName("WATERMAP", PU_STATIC), *b = buf;
