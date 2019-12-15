@@ -386,6 +386,8 @@ static void ExtraDataTicker(void)
 						DEBFILE(va("executing x_cmd %s ply %u ", netxcmdnames[id - 1], i));
 						(listnetxcmd[id])(&curpos, i);
 						DEBFILE("done\n");
+						if (!D_GetExistingTextcmd(gametic, i))
+							break;
 					}
 					else
 					{
