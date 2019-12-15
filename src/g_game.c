@@ -6871,7 +6871,7 @@ ATTRNORETURN void FUNCNORETURN G_StopMetalRecording(boolean kill)
 		{
 			UINT8 i;
 			for (i = 0; i < 16; i++, p++)
-				*p = P_RandomByte(); // This MD5 was chosen by fair dice roll and most likely < 50% correct.
+				*p = M_RandomByte(); // This MD5 was chosen by fair dice roll and most likely < 50% correct.
 		}
 #else
 		md5_buffer((char *)p+16, demo_p - (p+16), (void *)p); // make a checksum of everything after the checksum in the file.
@@ -6998,7 +6998,7 @@ boolean G_CheckDemoStatus(void)
 		UINT8 i;
 		WRITEUINT8(demo_p, DEMOMARKER); // add the demo end marker
 		for (i = 0; i < 16; i++, p++)
-			*p = P_RandomByte(); // This MD5 was chosen by fair dice roll and most likely < 50% correct.
+			*p = M_RandomByte(); // This MD5 was chosen by fair dice roll and most likely < 50% correct.
 #else
 		WRITEUINT8(demo_p, DEMOMARKER); // add the demo end marker
 		md5_buffer((char *)p+16, demo_p - (p+16), p); // make a checksum of everything after the checksum in the file.
