@@ -445,9 +445,9 @@ static lumpinfo_t* ResGetLumpsWad (FILE* handle, UINT16* nlmp, const char* filen
 
 /** Optimized pattern search in a file.
  */
-static boolean ResFindSignature (FILE* handle, char endPat[], UINT32 startpos)
+static boolean ResFindSignature (FILE* handle, const char endPat[], UINT32 startpos)
 {
-	char *s;
+	const char *s;
 	int c;
 
 	fseek(handle, startpos, SEEK_SET);
@@ -535,8 +535,8 @@ static lumpinfo_t* ResGetLumpsZip (FILE* handle, UINT16* nlmp)
 	lumpinfo_t *lump_p;
 	size_t i;
 
-	char pat_central[] = {0x50, 0x4b, 0x01, 0x02, 0x00};
-	char pat_end[] = {0x50, 0x4b, 0x05, 0x06, 0x00};
+	const char pat_central[] = {0x50, 0x4b, 0x01, 0x02, 0x00};
+	const char pat_end[] = {0x50, 0x4b, 0x05, 0x06, 0x00};
 
 	// Look for central directory end signature near end of file.
 	// Contains entry number (number of lumps), and central directory start offset.
@@ -1756,8 +1756,8 @@ W_VerifyPK3 (FILE *fp, lumpchecklist_t *checklist, boolean status)
 	UINT16 numlumps;
 	size_t i;
 
-	char pat_central[] = {0x50, 0x4b, 0x01, 0x02, 0x00};
-	char pat_end[] = {0x50, 0x4b, 0x05, 0x06, 0x00};
+	const char pat_central[] = {0x50, 0x4b, 0x01, 0x02, 0x00};
+	const char pat_end[] = {0x50, 0x4b, 0x05, 0x06, 0x00};
 
 	char lumpname[9];
 
