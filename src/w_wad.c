@@ -445,9 +445,9 @@ static lumpinfo_t* ResGetLumpsWad (FILE* handle, UINT16* nlmp, const char* filen
 
 /** Optimized pattern search in a file.
  */
-static boolean ResFindSignature (FILE* handle, char endPat[], UINT32 startpos)
+static boolean ResFindSignature (FILE* handle, const char endPat[], UINT32 startpos)
 {
-	char *s;
+	const char *s;
 	int c;
 
 	fseek(handle, startpos, SEEK_SET);
@@ -1890,4 +1890,135 @@ int W_VerifyNMUSlumps(const char *filename)
 		{NULL, 0},
 	};
 	return W_VerifyFile(filename, NMUSlist, false);
+}
+
+static boolean W_WadContainsMap(FILE *fp)
+{
+	size_t i;
+
+	// assume wad file
+	wadinfo_t header;
+	filelump_t lumpinfo;
+
+	// read the header
+	if (fread(&header, 1, sizeof header, fp) == sizeof header
+			&& header.numlumps < INT16_MAX
+			&& strncmp(header.identification, "ZWAD", 4)
+			&& strncmp(header.identification, "IWAD", 4)
+			&& strncmp(header.identification, "PWAD", 4)
+			&& strncmp(header.identification, "SDLL", 4))
+	{
+		return false;
+	}
+
+	header.numlumps = LONG(header.numlumps);
+	header.infotableofs = LONG(header.infotableofs);
+
+	// let seek to the lumpinfo list
+	if (fseek(fp, header.infotableofs, SEEK_SET) == -1)
+		return false;
+
+	for (i = 0; i < header.numlumps; i++)
+	{
+		// fill in lumpinfo for this wad file directory
+		if (fread(&lumpinfo, sizeof (lumpinfo), 1 , fp) != 1)
+			return false;
+
+		lumpinfo.filepos = LONG(lumpinfo.filepos);
+		lumpinfo.size = LONG(lumpinfo.size);
+
+		if (lumpinfo.size == 0)
+			continue;
+
+		if (strncmp(lumpinfo.name, "MAP", 3) == 0 && lumpinfo.name[5] == '\0')
+			return true;
+	}
+
+	return false;
+}
+
+static boolean W_Pk3ContainsMap(FILE *fp)
+{
+    zend_t zend;
+    zentry_t zentry;
+
+	UINT16 numlumps;
+	size_t i;
+
+	const char pat_central[] = {0x50, 0x4b, 0x01, 0x02, 0x00};
+	const char pat_end[] = {0x50, 0x4b, 0x05, 0x06, 0x00};
+
+	// Central directory bullshit
+
+	fseek(fp, 0, SEEK_END);
+	if (!ResFindSignature(fp, pat_end, max(0, ftell(fp) - (22 + 65536))))
+		return false;
+
+	fseek(fp, -4, SEEK_CUR);
+	if (fread(&zend, 1, sizeof zend, fp) < sizeof zend)
+		return false;
+
+	numlumps = zend.entries;
+
+	fseek(fp, zend.cdiroffset, SEEK_SET);
+	for (i = 0; i < numlumps; i++)
+	{
+		char *fullname;
+
+		if (fread(&zentry, 1, sizeof(zentry_t), fp) < sizeof(zentry_t))
+			return false;
+		if (memcmp(zentry.signature, pat_central, 4))
+			return false;
+
+		fullname = ZZ_Alloc(zentry.namelen + 1);
+		if (fgets(fullname, zentry.namelen + 1, fp) != fullname)
+		{
+			Z_Free(fullname);
+			return false;
+		}
+
+		// Match!
+		if (strnicmp(fullname, "Maps/MAP", 8) == 0 && stricmp(fullname + 10, ".wad") == 0)
+		{
+			Z_Free(fullname);
+			return true;
+		}
+		Z_Free(fullname);
+	}
+	return false;
+}
+
+/** Checks a wad for map data specifically.
+  * Used to set modifiedgame for keeping secret
+  * emblems from conflicting, nothing else.
+  *
+  * \param filename Filename of the wad to check.
+  * \return true if file contains map data, false otherwise.
+  * \author JTE
+  */
+boolean W_ContainsMap(const char *filename)
+{
+	FILE *handle;
+	boolean mapfound = false;
+
+	// SOC and Lua scripts can't be maps, silly!
+	if (stricmp(&filename[strlen(filename) - 4], ".soc") == 0
+#ifdef HAVE_BLUA
+	|| stricmp(&filename[strlen(filename) - 4], ".lua") == 0
+#endif
+	)
+		return false;
+	// open wad file
+	else if ((handle = W_OpenWadFile(&filename, false)) == NULL)
+		return false; // Can't open it? No maps!
+
+	// Handle PK3
+	if (stricmp(&filename[strlen(filename) - 4], ".pk3") == 0)
+		mapfound = W_Pk3ContainsMap(handle);
+	// Handle WAD / ZWAD
+	else
+		mapfound = W_WadContainsMap(handle);
+
+	fclose(handle);
+	return false;
 }
