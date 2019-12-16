@@ -1824,7 +1824,7 @@ static void Command_Map_f(void)
 
 	option_force    =   COM_CheckPartialParm("-f");
 	option_gametype =   COM_CheckPartialParm("-g");
-	newresetplayers = ! COM_CheckParm("-noresetplayers");
+	newresetplayers =  !COM_CheckParm("-noresetplayers");
 
 	mustmodifygame =
 		!( netgame     || multiplayer ) &&
