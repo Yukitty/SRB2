@@ -1523,6 +1523,11 @@ void Y_StartIntermission(void)
 		default:
 			break;
 	}
+
+	if (modeattacking == ATTACKING_RECORD)
+		G_UpdateRecordReplays();
+	else if (modeattacking == ATTACKING_NIGHTS)
+		G_SetNightsRecords();
 }
 
 //

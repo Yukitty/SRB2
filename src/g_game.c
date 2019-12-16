@@ -557,7 +557,7 @@ void G_AddTempNightsRecords(UINT32 pscore, tic_t ptime, UINT8 mare)
 // Update replay files/data, etc. for Record Attack
 // See G_SetNightsRecords for NiGHTS Attack.
 //
-static void G_UpdateRecordReplays(void)
+void G_UpdateRecordReplays(void)
 {
 	const size_t glen = strlen(srb2home)+1+strlen("replay")+1+strlen(timeattackfolder)+1+strlen("MAPXX")+1;
 	char *gpath;
@@ -3328,11 +3328,7 @@ void G_UpdateVisited(void)
 				mapvisited[gamemap-1] |= MV_ALLEMERALDS;
 		}
 
-		if (modeattacking == ATTACKING_RECORD)
-			G_UpdateRecordReplays();
-		else if (modeattacking == ATTACKING_NIGHTS)
-			G_SetNightsRecords();
-		else
+		if (!modeattacking)
 		{
 			// Save your clear time regardless of record attack, in co-op, race, or competition mode.
 			boolean newrecord = false;

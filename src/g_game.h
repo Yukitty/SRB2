@@ -259,6 +259,7 @@ tic_t G_GetBestNightsTime(INT16 map, UINT8 mare);
 UINT8 G_GetBestNightsGrade(INT16 map, UINT8 mare);
 
 void G_AddTempNightsRecords(UINT32 pscore, tic_t ptime, UINT8 mare);
+void G_UpdateRecordReplays(void);
 void G_SetNightsRecords(void);
 
 FUNCMATH INT32 G_TicsToHours(tic_t tics);
