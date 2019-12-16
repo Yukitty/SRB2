@@ -209,12 +209,12 @@ static inline void W_LoadDehackedLumpsPK3(UINT16 wadnum, boolean mainfile)
 		{
 			lumpinfo_t *lump_p = &wadfiles[wadnum]->lumpinfo[posStart];
 			size_t length = strlen(wadfiles[wadnum]->filename) + 1 + strlen(lump_p->name2); // length of file name, '|', and lump name
-			char *name = malloc(length + 1);
+			char *name = ZZ_Alloc(length + 1);
 			sprintf(name, "%s|%s", wadfiles[wadnum]->filename, lump_p->name2);
 			name[length] = '\0';
 			CONS_Printf(M_GetText("Loading SOC from %s\n"), name);
 			DEH_LoadDehackedLumpPwad(wadnum, posStart, mainfile);
-			free(name);
+			Z_Free(name);
 		}
 	}
 }
@@ -240,13 +240,13 @@ static inline void W_LoadDehackedLumps(UINT16 wadnum, boolean mainfile)
 			if (memcmp(lump_p->name,"SOC_",4)==0) // Check for generic SOC lump
 			{	// shameless copy+paste of code from LUA_LoadLump
 				size_t length = strlen(wadfiles[wadnum]->filename) + 1 + strlen(lump_p->name2); // length of file name, '|', and lump name
-				char *name = malloc(length + 1);
+				char *name = ZZ_Alloc(length + 1);
 				sprintf(name, "%s|%s", wadfiles[wadnum]->filename, lump_p->name2);
 				name[length] = '\0';
 
 				CONS_Printf(M_GetText("Loading SOC from %s\n"), name);
 				DEH_LoadDehackedLumpPwad(wadnum, lump, mainfile);
-				free(name);
+				Z_Free(name);
 			}
 			else if (memcmp(lump_p->name,"MAINCFG",8)==0) // Check for MAINCFG
 			{
@@ -387,12 +387,12 @@ static lumpinfo_t* ResGetLumpsWad (FILE* handle, UINT16* nlmp, const char* filen
 
 	// read wad file directory
 	i = header.numlumps * sizeof (*fileinfo);
-	fileinfov = fileinfo = malloc(i);
+	fileinfov = fileinfo = ZZ_Alloc(i);
 	if (fseek(handle, header.infotableofs, SEEK_SET) == -1
 		|| fread(fileinfo, 1, i, handle) < i)
 	{
 		CONS_Alert(CONS_ERROR, M_GetText("Corrupt wadfile directory (%s)\n"), M_FileError(handle));
-		free(fileinfov);
+		Z_Free(fileinfov);
 		return NULL;
 	}
 
@@ -438,7 +438,7 @@ static lumpinfo_t* ResGetLumpsWad (FILE* handle, UINT16* nlmp, const char* filen
 		strncpy(lump_p->name2, fileinfo->name, 8);
 		lump_p->name2[8] = '\0';
 	}
-	free(fileinfov);
+	Z_Free(fileinfov);
 	*nlmp = numlumps;
 	return lumpinfo;
 }
@@ -556,7 +556,7 @@ static lumpinfo_t* ResGetLumpsZip (FILE* handle, UINT16* nlmp)
 	numlumps = zend.entries;
 
 	lump_p = lumpinfo = Z_Malloc(numlumps * sizeof (*lumpinfo), PU_STATIC, NULL);
-	zentry = zentries = malloc(numlumps * sizeof (*zentries));
+	zentry = zentries = ZZ_Alloc(numlumps * sizeof (*zentries));
 
 	fseek(handle, zend.cdiroffset, SEEK_SET);
 	for (i = 0; i < numlumps; i++, zentry++, lump_p++)
@@ -569,14 +569,14 @@ static lumpinfo_t* ResGetLumpsZip (FILE* handle, UINT16* nlmp)
 		{
 			CONS_Alert(CONS_ERROR, "Failed to read central directory (%s)\n", M_FileError(handle));
 			Z_Free(lumpinfo);
-			free(zentries);
+			Z_Free(zentries);
 			return NULL;
 		}
 		if (memcmp(zentry->signature, pat_central, 4))
 		{
 			CONS_Alert(CONS_ERROR, "Central directory is corrupt\n");
 			Z_Free(lumpinfo);
-			free(zentries);
+			Z_Free(zentries);
 			return NULL;
 		}
 
@@ -584,13 +584,13 @@ static lumpinfo_t* ResGetLumpsZip (FILE* handle, UINT16* nlmp)
 		lump_p->disksize = zentry->compsize;
 		lump_p->size = zentry->size;
 
-		fullname = malloc(zentry->namelen + 1);
+		fullname = ZZ_Alloc(zentry->namelen + 1);
 		if (fgets(fullname, zentry->namelen + 1, handle) != fullname)
 		{
 			CONS_Alert(CONS_ERROR, "Unable to read lumpname (%s)\n", M_FileError(handle));
 			Z_Free(lumpinfo);
-			free(zentries);
-			free(fullname);
+			Z_Free(zentries);
+			Z_Free(fullname);
 			return NULL;
 		}
 
@@ -609,7 +609,7 @@ static lumpinfo_t* ResGetLumpsZip (FILE* handle, UINT16* nlmp)
 		lump_p->name2 = Z_Calloc(zentry->namelen + 1, PU_STATIC, NULL);
 		strncpy(lump_p->name2, fullname, zentry->namelen);
 
-		free(fullname);
+		Z_Free(fullname);
 
 		switch(zentry->compression)
 		{
@@ -631,7 +631,7 @@ static lumpinfo_t* ResGetLumpsZip (FILE* handle, UINT16* nlmp)
 		}
 	}
 
-	free(zentries);
+	Z_Free(zentries);
 
 	*nlmp = numlumps;
 	return lumpinfo;
@@ -1788,9 +1788,12 @@ W_VerifyPK3 (FILE *fp, lumpchecklist_t *checklist, boolean status)
 		if (memcmp(zentry.signature, pat_central, 4))
 			return true;
 
-		fullname = malloc(zentry.namelen + 1);
+		fullname = ZZ_Alloc(zentry.namelen + 1);
 		if (fgets(fullname, zentry.namelen + 1, fp) != fullname)
+		{
+			Z_Free(fullname);
 			return true;
+		}
 
 		// Strip away file address and extension for the 8char name.
 		if ((trimname = strrchr(fullname, '/')) != 0)
@@ -1807,10 +1810,13 @@ W_VerifyPK3 (FILE *fp, lumpchecklist_t *checklist, boolean status)
 			strncpy(lumpname, trimname, min(8, dotpos - trimname));
 
 			if (! W_VerifyName(lumpname, checklist, status))
+			{
+				Z_Free(fullname);
 				return false;
+			}
 		}
 
-		free(fullname);
+		Z_Free(fullname);
 	}
 
 	return true;
