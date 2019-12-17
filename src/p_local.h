@@ -519,7 +519,9 @@ boolean P_CheckMissileSpawn(mobj_t *th);
 void P_Thrust(mobj_t *mo, angle_t angle, fixed_t move);
 void P_DoSuperTransformation(player_t *player, boolean giverings);
 void P_ExplodeMissile(mobj_t *mo);
-boolean P_IsThingLocal(const mobj_t *mo);
+boolean P_IsThingTypeLocal(const mobjtype_t type);
 void P_CheckGravity(mobj_t *mo, boolean affect);
+
+#define P_IsThingLocal(mo) (P_IsThingTypeLocal(mo->type))
 
 #endif // __P_LOCAL__

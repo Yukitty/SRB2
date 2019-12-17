@@ -1598,15 +1598,14 @@ fixed_t P_GetMobjGravity(mobj_t *mo)
 }
 
 //
-// P_IsThingLocal
+// P_IsThingTypeLocal
 //
-// Checks if the given mobj
-// is a local-only thing.
+// Checks if the given mobjtype
+// is client-side only.
 //
-boolean P_IsThingLocal(const mobj_t *mo)
+boolean P_IsThingTypeLocal(const mobjtype_t type)
 {
-	I_Assert(mo);
-	switch (mo->type)
+	switch (type)
 	{
 	case MT_HOOP:
 	case MT_LOCKON:
