@@ -3633,6 +3633,9 @@ static boolean PIT_CheckSolidsTeeter(mobj_t *thing)
 	if (!teeterer || !thing)
 		return true;
 
+	if (P_IsThingLocal(thing))
+		return true;
+
 	if (!(thing->flags & MF_SOLID))
 		return true;
 

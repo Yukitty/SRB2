@@ -361,6 +361,27 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 	if (player->spectator)
 		return;
 
+	// Simplified touch routine for local things
+	if (P_IsThingLocal(special))
+	{
+		switch (special->type)
+		{
+		// Secret emblem thingy
+		case MT_EMBLEM:
+			{
+				if (demoplayback || player->bot || !P_IsLocalPlayer(player))
+					return;
+				emblemlocations[special->health-1].collected = true;
+
+				M_UpdateUnlockablesAndExtraEmblems();
+
+				G_SaveGameData();
+				break;
+			}
+		}
+		return;
+	}
+
 	// Ignore multihits in "ouchie" mode
 	if (special->flags & (MF_ENEMY|MF_BOSS) && special->flags2 & MF2_FRET)
 		return;
@@ -721,19 +742,6 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 			player->powers[pw_emeralds] |= special->threshold;
 			P_DoMatchSuper(player);
 			break;
-
-		// Secret emblem thingy
-		case MT_EMBLEM:
-			{
-				if (demoplayback || player->bot || !P_IsLocalPlayer(player))
-					return;
-				emblemlocations[special->health-1].collected = true;
-
-				M_UpdateUnlockablesAndExtraEmblems();
-
-				G_SaveGameData();
-				break;
-			}
 
 		// CTF Flags
 		case MT_REDFLAG:

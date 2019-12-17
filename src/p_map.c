@@ -766,7 +766,7 @@ static boolean PIT_CheckThing(mobj_t *thing)
 #endif
 
 	/// \todo Emblems need to be able to get sucked up by NiGHTS
-	if (P_IsThingLocal(tmthing))
+	if (P_IsThingLocal(tmthing) || P_IsThingLocal(thing))
 		return false;
 
 	// Metal Sonic destroys tiny baby objects.
@@ -2621,7 +2621,8 @@ boolean PIT_PushableMoved(mobj_t *thing)
 	fixed_t blockdist;
 
 	if (!(thing->flags & MF_SOLID)
-		|| (thing->flags & MF_NOGRAVITY))
+		|| (thing->flags & MF_NOGRAVITY)
+		|| P_IsThingLocal(thing))
 		return true; // Don't move something non-solid!
 
 	// Only pushables are supported... in 2.0. Now players can be moved too!
@@ -4138,6 +4139,9 @@ static boolean PIT_RadiusAttack(mobj_t *thing)
 	fixed_t dx, dy, dz, dist;
 
 	if (thing == bombspot) // ignore the bomb itself (Deton fix)
+		return true;
+
+	if (P_IsThingLocal(thing))
 		return true;
 
 	if ((thing->flags & (MF_MONITOR|MF_SHOOTABLE)) != MF_SHOOTABLE)

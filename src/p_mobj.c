@@ -113,8 +113,16 @@ FUNCINLINE static ATTRINLINE void P_SetupStateAnimation(mobj_t *mobj, state_t *s
 	}
 	else if (st->frame & FF_RANDOMANIM)
 	{
-		mobj->frame += P_RandomKey(animlength + 1);     // Random starting frame
-		mobj->anim_duration -= P_RandomKey(st->var2); // Random duration for first frame
+		if (P_IsThingLocal(mobj))
+		{
+			mobj->frame += M_RandomKey(animlength + 1);     // Random starting frame
+			mobj->anim_duration -= M_RandomKey(st->var2); // Random duration for first frame
+		}
+		else
+		{
+			mobj->frame += P_RandomKey(animlength + 1);     // Random starting frame
+			mobj->anim_duration -= P_RandomKey(st->var2); // Random duration for first frame
+		}
 	}
 }
 
