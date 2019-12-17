@@ -7013,7 +7013,8 @@ static void M_EmblemHints(INT32 choice)
 {
 	(void)choice;
 	SR_EmblemHintMenu[0].status = (M_SecretUnlocked(SECRET_ITEMFINDER)) ? (IT_CVAR|IT_STRING) : (IT_SECRET);
-	SR_EmblemHintMenu[1].itemaction = currentMenu->prevMenu;
+	SR_EmblemHintMenu[1].itemaction = currentMenu;
+	SR_EmblemHintDef.prevMenu = currentMenu;
 	M_SetupNextMenu(&SR_EmblemHintDef);
 	itemOn = 1; // always start on back.
 }
