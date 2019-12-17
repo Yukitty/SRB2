@@ -369,7 +369,7 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 		// Secret emblem thingy
 		case MT_EMBLEM:
 			{
-				if (demoplayback || player->bot || !P_IsLocalPlayer(player))
+				if (demoplayback || player->bot)
 					return;
 				emblemlocations[special->health-1].collected = true;
 
@@ -379,6 +379,8 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 				break;
 			}
 		}
+		S_StartSound(NULL, special->info->deathsound); // local things only play sound for self anyway.
+		P_KillMobj(special, NULL, toucher, DMG_INSTAKILL);
 		return;
 	}
 
@@ -2388,7 +2390,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 	target->health = 0; // This makes it easy to check if something's dead elsewhere.
 
 #ifdef HAVE_BLUA
-	if (LUAh_MobjDeath(target, inflictor, source, damagetype) || P_MobjWasRemoved(target))
+	if (!P_IsThingLocal(target) && (LUAh_MobjDeath(target, inflictor, source, damagetype) || P_MobjWasRemoved(target)))
 		return;
 #endif
 

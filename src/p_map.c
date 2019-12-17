@@ -740,6 +740,10 @@ static boolean PIT_CheckThing(mobj_t *thing)
 	|| (thing->player && thing->player->spectator))
 		return true;
 
+	// ignore client-side things completely when processing server-side object movements
+	if (P_IsThingLocal(thing) && !P_IsThingLocal(tmthing))
+		return true;
+
 #ifdef SEENAMES
   // Do name checks all the way up here
   // So that NOTHING ELSE can see MT_NAMECHECK because it is client-side.
@@ -765,9 +769,20 @@ static boolean PIT_CheckThing(mobj_t *thing)
 	}
 #endif
 
+	// Simple handling for other client-side things
 	/// \todo Emblems need to be able to get sucked up by NiGHTS
-	if (P_IsThingLocal(tmthing) || P_IsThingLocal(thing))
-		return false;
+	if (P_IsThingLocal(tmthing))
+	{
+		// Test if special client-side thing collides with server-side player.
+		if (tmthing->flags & MF_SPECIAL && thing->player && P_IsLocalPlayer(thing->player))
+		{
+			blockdist = thing->radius + tmthing->radius;
+			if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
+				return true; // didn't hit it
+			P_TouchSpecialThing(tmthing, thing, true);
+		}
+		return true;
+	}
 
 	// Metal Sonic destroys tiny baby objects.
 	if (tmthing->type == MT_METALSONIC_RACE
