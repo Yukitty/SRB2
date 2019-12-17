@@ -2985,6 +2985,14 @@ static void Got_KickCmd(UINT8 **p, INT32 playernum)
 	}
 	else
 		CL_RemovePlayer(pnum, kickreason);
+
+#ifdef DEBUGRANDOM
+	if (msg == KICK_MSG_CON_FAIL)
+	{
+		CONS_Printf("DBG: Consistency failure occurred, check RNG logs.\n");
+		return I_Quit();
+	}
+#endif
 }
 
 consvar_t cv_allownewplayer = {"allowjoin", "On", CV_SAVE|CV_NETVAR, CV_OnOff, NULL, 0, NULL, NULL, 0, 0, NULL	};
@@ -4359,9 +4367,11 @@ static INT16 Consistancy(void)
 			ret *= i+1;
 		}
 	}
+#ifndef DEBUGRANDOM
 	// I give up
 	// Coop desynching enemies is painful
 	if (!G_PlatformGametype())
+#endif
 		ret += P_GetRandSeed();
 
 #ifdef MOBJCONSISTANCY
@@ -4434,6 +4444,10 @@ static INT16 Consistancy(void)
 #endif
 
 	DEBFILE(va("Consistancy = %u\n", (ret & 0xFFFF)));
+
+#ifdef DEBUGRANDOM
+	P_EndRandomFrame();
+#endif
 
 	return (INT16)(ret & 0xFFFF);
 }

@@ -19,6 +19,9 @@
 #include "m_random.h"
 #include "m_fixed.h"
 
+#ifdef DEBUGRANDOM
+static UINT32 prng_use = 0;
+#endif
 
 
 // ---------------------------
@@ -95,6 +98,9 @@ static UINT32 initialseed = 0xBADE4404;
   */
 ATTRINLINE static fixed_t FUNCINLINE __internal_prng__(void)
 {
+#ifdef DEBUGRANDOM
+	prng_use++;
+#endif
 	randomseed ^= randomseed >> 13;
 	randomseed ^= randomseed >> 11;
 	randomseed ^= randomseed << 21;
@@ -254,3 +260,12 @@ UINT32 M_RandomizedSeed(void)
 {
 	return ((totalplaytime & 0xFFFF) << 16)|M_RandomFixed();
 }
+
+#ifdef DEBUGRANDOM
+void P_EndRandomFrame(void)
+{
+	CONS_Printf("prng_use this frame: %u\n---\n", prng_use);
+	prng_use = 0;
+	CONS_Printf("next frame's seed: %u\n", randomseed);
+}
+#endif

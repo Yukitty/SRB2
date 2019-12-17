@@ -65,6 +65,7 @@ fixed_t P_RandomPeek(void);
 UINT32 P_GetRandSeedD(const char *rfile, INT32 rline);
 UINT32 P_GetInitSeedD(const char *rfile, INT32 rline);
 void P_SetRandSeedD(const char *rfile, INT32 rline, UINT32 seed);
+void P_EndRandomFrame(void);
 #else
 UINT32 P_GetRandSeed(void);
 UINT32 P_GetInitSeed(void);
