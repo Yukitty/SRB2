@@ -11692,6 +11692,10 @@ You should think about modifying the deathmatch starts to take full advantage of
 		if (mthing->type == mobjinfo[i].doomednum)
 			break;
 
+	// Don't spawn local things on a dedicated server
+	if (P_IsThingTypeLocal(i) && dedicated)
+		return;
+
 	if (i == NUMMOBJTYPES)
 	{
 		if (mthing->type == 3328) // 3D Mode start Thing
