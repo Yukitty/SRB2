@@ -1607,6 +1607,7 @@ boolean P_IsThingTypeLocal(const mobjtype_t type)
 {
 	switch (type)
 	{
+	case MT_GHOST:
 	case MT_HOOP:
 	case MT_LOCKON:
 	case MT_EMBLEM:
