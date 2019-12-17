@@ -9282,9 +9282,6 @@ void P_MobjThinker(mobj_t *mobj)
 			case MT_RING:
 			case MT_REDTEAMRING:
 			case MT_BLUETEAMRING:
-				P_KillRingsInLava(mobj);
-				if (P_MobjWasRemoved(mobj))
-					return;
 				/* FALLTHRU */
 			case MT_COIN:
 			case MT_BLUESPHERE:
