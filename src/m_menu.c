@@ -4690,9 +4690,8 @@ static boolean M_LevelAvailableOnPlatter(INT32 mapnum)
 			if (mapnum+1 == spstage_start)
 				return true;
 
-#ifndef DEVELOP
-			if (mapvisited[mapnum]) // MV_MP
-#endif
+			// Show maps you've unlocked!
+			if (mapheaderinfo[mapnum]->unlockrequired >= 0)
 				return true;
 
 			/* FALLTHRU */
