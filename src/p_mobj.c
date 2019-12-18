@@ -4184,8 +4184,11 @@ static void P_KillRingsInLava(mobj_t *mo)
 
 static void P_RingThinker(mobj_t *mobj)
 {
+	// NiGHTS has its own attract mode
+	if (mobj->flags2 & MF2_NIGHTSPULL)
+		;
 	// Chase attract shields while you have a valid target
-	if (mobj->tracer && mobj->tracer->player && mobj->tracer->player->powers[pw_shield] & SH_PROTECTELECTRIC)
+	else if (mobj->tracer && mobj->tracer->player && mobj->tracer->player->powers[pw_shield] & SH_PROTECTELECTRIC)
 		P_Attract(mobj, mobj->tracer, false);
 	// Turn attract rings that lose their target into flingrings with a short fuse
 	else if (mobj->momx || mobj->momy || mobj->momz)
