@@ -704,6 +704,7 @@ static void P_LoadRawSectors(UINT8 *data, size_t i)
 	mapsector_t *ms;
 	sector_t *ss;
 	levelflat_t *foundflats;
+	char floorpic[8], ceilingpic[8];
 
 	// We count how many sectors we got.
 	numsectors = i / sizeof (mapsector_t);
@@ -729,8 +730,11 @@ static void P_LoadRawSectors(UINT8 *data, size_t i)
 		ss->floorheight = SHORT(ms->floorheight)<<FRACBITS;
 		ss->ceilingheight = SHORT(ms->ceilingheight)<<FRACBITS;
 
-		ss->floorpic = P_AddLevelFlat(LUAh_FlatReplace(ms->floorpic), foundflats);
-		ss->ceilingpic = P_AddLevelFlat(LUAh_FlatReplace(ms->ceilingpic), foundflats);
+		strncpy(floorpic, ms->floorpic, 8);
+		strncpy(ceilingpic, ms->ceilingpic, 8);
+		LUAh_FlatReplace(floorpic, ceilingpic);
+		ss->floorpic = P_AddLevelFlat(floorpic, foundflats);
+		ss->ceilingpic = P_AddLevelFlat(ceilingpic, foundflats);
 
 		ss->lightlevel = SHORT(ms->lightlevel);
 		ss->spawn_lightlevel = SHORT(ms->lightlevel);

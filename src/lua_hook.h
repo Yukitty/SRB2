@@ -94,6 +94,6 @@ boolean LUAh_FollowMobj(player_t *player, mobj_t *mobj); // Hook for P_PlayerAft
 UINT8 LUAh_PlayerCanDamage(player_t *player, mobj_t *mobj); // Hook for P_PlayerCanDamage
 void LUAh_PlayerQuit(player_t *plr, int reason); // Hook for player quitting
 void LUAh_IntermissionThinker(void); // Hook for Y_Ticker
-const char *LUAh_FlatReplace(const char flatname[8]); // Hook for flat loading on level init
+void LUAh_FlatReplace(char floorpic[8], char ceilingpic[8]); // Hook for flat loading on level init
 
 #endif

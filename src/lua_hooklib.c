@@ -1347,19 +1347,23 @@ void LUAh_IntermissionThinker(void)
 	}
 }
 
-const char *LUAh_FlatReplace(const char flatname[8])
+void LUAh_FlatReplace(char floorpic[8], char ceilingpic[8])
 {
-	static char newflat[8];
 	hook_p hookp;
 	unsigned i;
 
 	if (!gL || !(hooksAvailable[hook_FlatReplace/8] & (1<<(hook_FlatReplace%8))))
-		return flatname;
+		return;
 
 	for (i = 0; i < 8; i++)
-		if (flatname[i] == '\0')
+		if (floorpic[i] == '\0')
 			break;
-	lua_pushlstring(gL, flatname, i);
+	lua_pushlstring(gL, floorpic, i);
+
+	for (i = 0; i < 8; i++)
+		if (ceilingpic[i] == '\0')
+			break;
+	lua_pushlstring(gL, ceilingpic, i);
 
 	for (hookp = roothook; hookp; hookp = hookp->next)
 	{
@@ -1368,25 +1372,26 @@ const char *LUAh_FlatReplace(const char flatname[8])
 
 		lua_pushfstring(gL, FMT_HOOKID, hookp->id);
 		lua_gettable(gL, LUA_REGISTRYINDEX);
-		lua_pushvalue(gL, -2); // flatname
-		if (lua_pcall(gL, 1, 1, 0)) {
+		lua_pushvalue(gL, -3); // floorpic
+		lua_pushvalue(gL, -3); // ceilingpic
+		if (lua_pcall(gL, 2, 2, 0))
+		{
 			if (!hookp->error || cv_debug & DBG_LUA)
 				CONS_Alert(CONS_WARNING,"%s\n",lua_tostring(gL, -1));
 			lua_pop(gL, 1); // pop error
 			hookp->error = true;
 		}
-		else if (!lua_isnil(gL, -1))
-		{
-			strncpy(newflat, lua_tostring(gL, -1), 8);
-			lua_pop(gL, 2); // pop newflat and flat
-			return newflat; // return flat replacement
-		}
 		else
-			lua_pop(gL, 1); // pop nil
+		{
+			if (lua_isstring(gL, -2))
+				strncpy(floorpic, lua_tostring(gL, -2), 8);
+			if (lua_isstring(gL, -1))
+				strncpy(ceilingpic, lua_tostring(gL, -1), 8);
+			lua_pop(gL, 2); // pop return values
+		}
 	}
 
-	lua_pop(gL, 1); // pop flatname
-	return flatname;
+	lua_pop(gL, 2); // pop floorpic, ceilingpic
 }
 
 #endif
