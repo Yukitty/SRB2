@@ -62,6 +62,7 @@ const char *const hookNames[hook_MAX+1] = {
 	"PlayerCanDamage",
 	"PlayerQuit",
 	"IntermissionThinker",
+	"FlatReplace",
 	NULL
 };
 
@@ -1344,6 +1345,48 @@ void LUAh_IntermissionThinker(void)
 			hookp->error = true;
 		}
 	}
+}
+
+const char *LUAh_FlatReplace(const char flatname[8])
+{
+	static char newflat[8];
+	hook_p hookp;
+	unsigned i;
+
+	if (!gL || !(hooksAvailable[hook_FlatReplace/8] & (1<<(hook_FlatReplace%8))))
+		return flatname;
+
+	for (i = 0; i < 8; i++)
+		if (flatname[i] == '\0')
+			break;
+	lua_pushlstring(gL, flatname, i);
+
+	for (hookp = roothook; hookp; hookp = hookp->next)
+	{
+		if (hookp->type != hook_FlatReplace)
+			continue;
+
+		lua_pushfstring(gL, FMT_HOOKID, hookp->id);
+		lua_gettable(gL, LUA_REGISTRYINDEX);
+		lua_pushvalue(gL, -2); // flatname
+		if (lua_pcall(gL, 1, 1, 0)) {
+			if (!hookp->error || cv_debug & DBG_LUA)
+				CONS_Alert(CONS_WARNING,"%s\n",lua_tostring(gL, -1));
+			lua_pop(gL, 1); // pop error
+			hookp->error = true;
+		}
+		else if (!lua_isnil(gL, -1))
+		{
+			strncpy(newflat, lua_tostring(gL, -1), 8);
+			lua_pop(gL, 2); // pop newflat and flat
+			return newflat; // return flat replacement
+		}
+		else
+			lua_pop(gL, 1); // pop nil
+	}
+
+	lua_pop(gL, 1); // pop flatname
+	return flatname;
 }
 
 #endif

@@ -729,8 +729,8 @@ static void P_LoadRawSectors(UINT8 *data, size_t i)
 		ss->floorheight = SHORT(ms->floorheight)<<FRACBITS;
 		ss->ceilingheight = SHORT(ms->ceilingheight)<<FRACBITS;
 
-		ss->floorpic = P_AddLevelFlat(ms->floorpic, foundflats);
-		ss->ceilingpic = P_AddLevelFlat(ms->ceilingpic, foundflats);
+		ss->floorpic = P_AddLevelFlat(LUAh_FlatReplace(ms->floorpic), foundflats);
+		ss->ceilingpic = P_AddLevelFlat(LUAh_FlatReplace(ms->ceilingpic), foundflats);
 
 		ss->lightlevel = SHORT(ms->lightlevel);
 		ss->spawn_lightlevel = SHORT(ms->lightlevel);
