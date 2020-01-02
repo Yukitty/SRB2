@@ -4184,6 +4184,31 @@ static void P_KillRingsInLava(mobj_t *mo)
 
 static void P_RingThinker(mobj_t *mobj)
 {
+	// NiGHTS has its own attract mode
+	if (mobj->flags2 & MF2_NIGHTSPULL)
+		;
+	// Chase attract shields while you have a valid target
+	else if (mobj->tracer && mobj->tracer->player && mobj->tracer->player->powers[pw_shield] & SH_PROTECTELECTRIC)
+		P_Attract(mobj, mobj->tracer, false);
+	// Turn attract rings that lose their target into flingrings with a short fuse
+	else if (mobj->momx || mobj->momy || mobj->momz)
+	{
+		mobj_t *flingring = P_SpawnMobj(mobj->x, mobj->y, mobj->z, mobj->info->reactiontime);
+
+		flingring->momx = mobj->momx;
+		flingring->momy = mobj->momy;
+		flingring->momz = mobj->momz;
+
+		flingring->fuse = 2*TICRATE; // Already flashing
+
+		flingring->destscale = mobj->destscale;
+		P_SetScale(flingring, mobj->scale);
+		flingring->scalespeed = mobj->scalespeed;
+
+		P_RemoveMobj(mobj);
+		return;
+	}
+
 	if (mobj->momx || mobj->momy)
 	{
 		P_RingXYMovement(mobj);
@@ -9292,8 +9317,6 @@ void P_MobjThinker(mobj_t *mobj)
 				P_RingThinker(mobj);
 				if (mobj->flags2 & MF2_NIGHTSPULL)
 					P_NightsItemChase(mobj);
-				else
-					A_AttractChase(mobj);
 				return;
 			// Flung items
 			case MT_FLINGRING:
@@ -9307,7 +9330,13 @@ void P_MobjThinker(mobj_t *mobj)
 				if (mobj->flags2 & MF2_NIGHTSPULL)
 					P_NightsItemChase(mobj);
 				else
-					A_AttractChase(mobj);
+				{
+					// spilled rings flicker before disappearing
+					if (leveltime & 1 && mobj->fuse && mobj->fuse < 2*TICRATE)
+						mobj->flags2 |= MF2_DONTDRAW;
+					else
+						mobj->flags2 &= ~MF2_DONTDRAW;
+				}
 				break;
 			case MT_EMBLEM:
 				if (mobj->flags2 & MF2_NIGHTSPULL)

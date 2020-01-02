@@ -11581,14 +11581,17 @@ void P_PlayerThink(player_t *player)
 	}
 
 	// Even if not NiGHTS, pull in nearby objects when walking around as John Q. Elliot.
-	if (!objectplacing && !((netgame || multiplayer) && player->spectator)
-	&& maptol & TOL_NIGHTS && (player->powers[pw_carry] != CR_NIGHTSMODE || player->powers[pw_nights_helper]))
+	if (!objectplacing && !player->spectator
+	&& ((maptol & TOL_NIGHTS && (player->powers[pw_carry] != CR_NIGHTSMODE || player->powers[pw_nights_helper]))
+	|| (player->powers[pw_shield] & SH_PROTECTELECTRIC)))
 	{
 		thinker_t *th;
 		mobj_t *mo2;
 		fixed_t x = player->mo->x;
 		fixed_t y = player->mo->y;
 		fixed_t z = player->mo->z;
+		boolean attractshield = (player->powers[pw_shield] & SH_PROTECTELECTRIC) != 0;
+		fixed_t range = FixedMul((attractshield ? RING_DIST : 128*FRACUNIT), player->mo->scale);
 
 		for (th = thlist[THINK_MOBJ].next; th != &thlist[THINK_MOBJ]; th = th->next)
 		{
@@ -11597,23 +11600,43 @@ void P_PlayerThink(player_t *player)
 
 			mo2 = (mobj_t *)th;
 
-			if (!(mo2->type == MT_RING || mo2->type == MT_COIN
+			if ((mo2->type == MT_REDTEAMRING && player->ctfteam == 1)
+			|| (mo2->type == MT_BLUETEAMRING && player->ctfteam == 2))
+				; // Attract correct team rings
+			else if (attractshield
+			&& (mo2->type == MT_FLINGRING || mo2->type == MT_FLINGCOIN
+			|| mo2->type == MT_FLINGBLUESPHERE || mo2->type == MT_FLINGNIGHTSCHIP))
+				; // Attract flingrings with a shield only
+			else if (!(mo2->type == MT_RING || mo2->type == MT_COIN
 				|| mo2->type == MT_BLUESPHERE || mo2->type == MT_BOMBSPHERE
 				|| mo2->type == MT_NIGHTSCHIP || mo2->type == MT_NIGHTSSTAR))
 				continue;
 
-			if (mo2->flags2 & MF2_NIGHTSPULL)
+			if (mo2->flags2 & MF2_NIGHTSPULL || mo2->tracer == player->mo)
 				continue;
 
-			if (P_AproxDistance(P_AproxDistance(mo2->x - x, mo2->y - y), mo2->z - z) > FixedMul(128*FRACUNIT, player->mo->scale))
+			if (P_AproxDistance(P_AproxDistance(mo2->x - x, mo2->y - y), mo2->z - z) > range)
 				continue;
+
+			// Turn flingrings into attractrings before pulling them
+			if (mo2->type == MT_FLINGRING || mo2->type == MT_FLINGCOIN
+			|| mo2->type == MT_FLINGBLUESPHERE || mo2->type == MT_FLINGNIGHTSCHIP)
+			{
+				mobj_t *newring;
+				newring = P_SpawnMobj(mo2->x, mo2->y, mo2->z, mo2->info->painchance);
+				P_RemoveMobj(mo2);
+				mo2 = newring;
+			}
 
 			// Yay! The thing's in reach! Pull it in!
 			mo2->flags |= MF_NOCLIP|MF_NOCLIPHEIGHT;
-			mo2->flags2 |= MF2_NIGHTSPULL;
-			// New NiGHTS attract speed dummied out because the older behavior
-			// is exploited as a mechanic. Uncomment to enable.
-			mo2->movefactor = 0; // 40*FRACUNIT; // initialize the NightsItemChase timer
+			if (!attractshield)
+			{
+				mo2->flags2 |= MF2_NIGHTSPULL;
+				// New NiGHTS attract speed dummied out because the older behavior
+				// is exploited as a mechanic. Uncomment to enable.
+				mo2->movefactor = 0; // 40*FRACUNIT; // initialize the NightsItemChase timer
+			}
 			P_SetTarget(&mo2->tracer, player->mo);
 		}
 	}
