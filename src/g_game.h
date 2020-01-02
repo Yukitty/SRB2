@@ -218,6 +218,7 @@ void G_ExitLevel(void);
 void G_NextLevel(void);
 void G_Continue(void);
 void G_UseContinue(void);
+void G_UpdateVisited(void);
 void G_AfterIntermission(void);
 void G_EndGame(void); // moved from y_inter.c/h and renamed
 
@@ -258,6 +259,7 @@ tic_t G_GetBestNightsTime(INT16 map, UINT8 mare);
 UINT8 G_GetBestNightsGrade(INT16 map, UINT8 mare);
 
 void G_AddTempNightsRecords(UINT32 pscore, tic_t ptime, UINT8 mare);
+void G_UpdateRecordReplays(void);
 void G_SetNightsRecords(void);
 
 FUNCMATH INT32 G_TicsToHours(tic_t tics);

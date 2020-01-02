@@ -1377,8 +1377,7 @@ static void SaveMobjThinker(const thinker_t *th, const UINT8 type)
 	UINT32 diff;
 	UINT16 diff2;
 
-	// Ignore stationary hoops - these will be respawned from mapthings.
-	if (mobj->type == MT_HOOP)
+	if (P_IsThingLocal(mobj))
 		return;
 
 	// These are NEVER saved.
@@ -3777,7 +3776,7 @@ static void P_RelinkPointers(void)
 
 		mobj = (mobj_t *)currentthinker;
 
-		if (mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		if (P_IsThingLocal(mobj) || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
 			continue;
 
 		if (mobj->tracer)
@@ -3936,6 +3935,8 @@ static void P_NetUnArchiveSpecials(void)
 
 	if (READUINT8(save_p) == 0x01) // metal sonic
 		G_LoadMetal(&save_p);
+
+	P_LoadEmblems();
 }
 
 // =======================================================================
@@ -4216,7 +4217,7 @@ void P_SaveNetGame(void)
 			continue;
 
 		mobj = (mobj_t *)th;
-		if (mobj->type == MT_HOOP || mobj->type == MT_HOOPCOLLIDE || mobj->type == MT_HOOPCENTER)
+		if (P_IsThingLocal(mobj) || mobj->type == MT_HOOPCOLLIDE || (mobj->type == MT_HOOPCENTER && mobj->threshold == 4242))
 			continue;
 		mobj->mobjnum = i++;
 	}

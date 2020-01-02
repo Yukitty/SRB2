@@ -1754,7 +1754,10 @@ static mobj_t *SearchMarioNode(msecnode_t *node)
 	mobj_t *thing = NULL;
 	for (; node; node = node->m_thinglist_next)
 	{
-		// Things which should NEVER be ejected from a MarioBlock, by type.
+		// Ignore clide-side only things.
+		if (P_IsThingLocal(node->m_thing))
+			continue;
+		// Other things which should NEVER be ejected from a MarioBlock, by type.
 		switch (node->m_thing->type)
 		{
 		case MT_NULL:
@@ -1788,15 +1791,12 @@ static mobj_t *SearchMarioNode(msecnode_t *node)
 		case MT_SCORE:
 		case MT_DROWNNUMBERS:
 		case MT_GOTEMERALD:
-		case MT_LOCKON:
+		case MT_LOCKONINF:
 		case MT_TAG:
 		case MT_GOTFLAG:
 		case MT_HOOP:
 		case MT_HOOPCOLLIDE:
 		case MT_NIGHTSCORE:
-#ifdef SEENAMES
-		case MT_NAMECHECK: // DEFINITELY not this, because it is client-side.
-#endif
 			continue;
 		default:
 			break;

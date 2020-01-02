@@ -3619,12 +3619,6 @@ void ItemFinder_OnChange(void)
 		CV_StealthSetValue(&cv_itemfinder, 0);
 		return;
 	}
-	else if (netgame || multiplayer)
-	{
-		CONS_Printf(M_GetText("This only works in single player.\n"));
-		CV_StealthSetValue(&cv_itemfinder, 0);
-		return;
-	}
 }
 
 /** Deals with a pointlimit change by printing the change to the console.

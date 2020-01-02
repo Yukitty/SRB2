@@ -8800,6 +8800,9 @@ static pusher_t *tmpusher; // pusher structure for blockmap searches
   */
 static inline boolean PIT_PushThing(mobj_t *thing)
 {
+	if (P_IsThingLocal(thing))
+		return false;
+
 	if (thing->eflags & MFE_PUSHED)
 		return false;
 

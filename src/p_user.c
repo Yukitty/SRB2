@@ -2212,6 +2212,9 @@ void P_DoPlayerExit(player_t *player)
 	player->powers[pw_underwater] = 0;
 	player->powers[pw_spacetime] = 0;
 	P_RestoreMusic(player);
+
+	if (P_IsLocalPlayer(player))
+		G_UpdateVisited();
 }
 
 #define SPACESPECIAL 12
@@ -3628,6 +3631,9 @@ static boolean PIT_CheckSolidsTeeter(mobj_t *thing)
 	fixed_t teeterertop = teeterer->z + teeterer->height;
 
 	if (!teeterer || !thing)
+		return true;
+
+	if (P_IsThingLocal(thing))
 		return true;
 
 	if (!(thing->flags & MF_SOLID))

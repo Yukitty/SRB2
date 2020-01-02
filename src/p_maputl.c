@@ -1173,6 +1173,9 @@ static boolean PIT_AddThingIntercepts(mobj_t *thing)
 	boolean tracepositive;
 	divline_t dl;
 
+	if (P_IsThingLocal(thing))
+		return true;
+
 	tracepositive = (trace.dx ^ trace.dy) > 0;
 
 	// check a corner to corner crossection for hit

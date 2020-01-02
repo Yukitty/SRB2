@@ -740,6 +740,10 @@ static boolean PIT_CheckThing(mobj_t *thing)
 	|| (thing->player && thing->player->spectator))
 		return true;
 
+	// ignore client-side things completely when processing server-side object movements
+	if (P_IsThingLocal(thing) && !P_IsThingLocal(tmthing))
+		return true;
+
 #ifdef SEENAMES
   // Do name checks all the way up here
   // So that NOTHING ELSE can see MT_NAMECHECK because it is client-side.
@@ -764,6 +768,21 @@ static boolean PIT_CheckThing(mobj_t *thing)
 		return false;
 	}
 #endif
+
+	// Simple handling for other client-side things
+	/// \todo Emblems need to be able to get sucked up by NiGHTS
+	if (P_IsThingLocal(tmthing))
+	{
+		// Test if special client-side thing collides with server-side player.
+		if (tmthing->flags & MF_SPECIAL && thing->player && P_IsLocalPlayer(thing->player))
+		{
+			blockdist = thing->radius + tmthing->radius;
+			if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
+				return true; // didn't hit it
+			P_TouchSpecialThing(tmthing, thing, true);
+		}
+		return true;
+	}
 
 	// Metal Sonic destroys tiny baby objects.
 	if (tmthing->type == MT_METALSONIC_RACE
@@ -2617,7 +2636,8 @@ boolean PIT_PushableMoved(mobj_t *thing)
 	fixed_t blockdist;
 
 	if (!(thing->flags & MF_SOLID)
-		|| (thing->flags & MF_NOGRAVITY))
+		|| (thing->flags & MF_NOGRAVITY)
+		|| P_IsThingLocal(thing))
 		return true; // Don't move something non-solid!
 
 	// Only pushables are supported... in 2.0. Now players can be moved too!
@@ -4134,6 +4154,9 @@ static boolean PIT_RadiusAttack(mobj_t *thing)
 	fixed_t dx, dy, dz, dist;
 
 	if (thing == bombspot) // ignore the bomb itself (Deton fix)
+		return true;
+
+	if (P_IsThingLocal(thing))
 		return true;
 
 	if ((thing->flags & (MF_MONITOR|MF_SHOOTABLE)) != MF_SHOOTABLE)

@@ -113,8 +113,16 @@ FUNCINLINE static ATTRINLINE void P_SetupStateAnimation(mobj_t *mobj, state_t *s
 	}
 	else if (st->frame & FF_RANDOMANIM)
 	{
-		mobj->frame += P_RandomKey(animlength + 1);     // Random starting frame
-		mobj->anim_duration -= P_RandomKey(st->var2); // Random duration for first frame
+		if (P_IsThingLocal(mobj))
+		{
+			mobj->frame += M_RandomKey(animlength + 1);     // Random starting frame
+			mobj->anim_duration -= M_RandomKey(st->var2); // Random duration for first frame
+		}
+		else
+		{
+			mobj->frame += P_RandomKey(animlength + 1);     // Random starting frame
+			mobj->anim_duration -= P_RandomKey(st->var2); // Random duration for first frame
+		}
 	}
 }
 
@@ -1588,6 +1596,31 @@ fixed_t P_GetMobjGravity(mobj_t *mo)
 
 	return gravityadd;
 }
+
+//
+// P_IsThingTypeLocal
+//
+// Checks if the given mobjtype
+// is client-side only.
+//
+boolean P_IsThingTypeLocal(const mobjtype_t type)
+{
+	switch (type)
+	{
+	case MT_GHOST:
+	case MT_HOOP:
+	case MT_LOCKON:
+	case MT_EMBLEM:
+#ifdef SEENAMES
+	case MT_NAMECHECK:
+#endif
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
+
 
 //
 // P_CheckGravity
@@ -10689,7 +10722,12 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 	}
 
 	if (!(mobj->flags & MF_NOTHINK))
-		P_AddThinker(THINK_MOBJ, &mobj->thinker);
+	{
+		if (P_IsThingLocal(mobj))
+			P_AddThinker(THINK_LOCALMOBJ, &mobj->thinker);
+		else
+			P_AddThinker(THINK_MOBJ, &mobj->thinker);
+	}
 
 	if (mobj->skin) // correct inadequecies above.
 	{
@@ -11681,6 +11719,10 @@ You should think about modifying the deathmatch starts to take full advantage of
 		if (mthing->type == mobjinfo[i].doomednum)
 			break;
 
+	// Don't spawn local things on a dedicated server
+	if (P_IsThingTypeLocal(i) && dedicated)
+		return;
+
 	if (i == NUMMOBJTYPES)
 	{
 		if (mthing->type == 3328) // 3D Mode start Thing
@@ -11837,7 +11879,7 @@ You should think about modifying the deathmatch starts to take full advantage of
 	if (i == MT_TOKEN && ((gametype != GT_COOP && gametype != GT_COMPETITION) || tokenbits == 30 || tokenlist & (1 << tokenbits++)))
 		return; // you already got this token, or there are too many, or the gametype's not right
 
-	if (i == MT_EMBLEM && (netgame || multiplayer || (modifiedgame && !savemoddata))) // No cheating!!
+	if (i == MT_EMBLEM && (modifiedgame && !savemoddata)) // No cheating!!
 		return;
 
 	// Objectplace landing point

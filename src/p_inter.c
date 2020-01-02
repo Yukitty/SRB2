@@ -361,6 +361,29 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 	if (player->spectator)
 		return;
 
+	// Simplified touch routine for local things
+	if (P_IsThingLocal(special))
+	{
+		switch (special->type)
+		{
+		// Secret emblem thingy
+		case MT_EMBLEM:
+			{
+				if (demoplayback || player->bot)
+					return;
+				emblemlocations[special->health-1].collected = true;
+
+				M_UpdateUnlockablesAndExtraEmblems();
+
+				G_SaveGameData();
+				break;
+			}
+		}
+		S_StartSound(NULL, special->info->deathsound); // local things only play sound for self anyway.
+		P_KillMobj(special, NULL, toucher, DMG_INSTAKILL);
+		return;
+	}
+
 	// Ignore multihits in "ouchie" mode
 	if (special->flags & (MF_ENEMY|MF_BOSS) && special->flags2 & MF2_FRET)
 		return;
@@ -721,19 +744,6 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher, boolean heightcheck)
 			player->powers[pw_emeralds] |= special->threshold;
 			P_DoMatchSuper(player);
 			break;
-
-		// Secret emblem thingy
-		case MT_EMBLEM:
-			{
-				if (demoplayback || player->bot)
-					return;
-				emblemlocations[special->health-1].collected = true;
-
-				M_UpdateUnlockablesAndExtraEmblems();
-
-				G_SaveGameData();
-				break;
-			}
 
 		// CTF Flags
 		case MT_REDFLAG:
@@ -2380,7 +2390,7 @@ void P_KillMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, UINT8 damaget
 	target->health = 0; // This makes it easy to check if something's dead elsewhere.
 
 #ifdef HAVE_BLUA
-	if (LUAh_MobjDeath(target, inflictor, source, damagetype) || P_MobjWasRemoved(target))
+	if (!P_IsThingLocal(target) && (LUAh_MobjDeath(target, inflictor, source, damagetype) || P_MobjWasRemoved(target)))
 		return;
 #endif
 

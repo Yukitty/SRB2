@@ -1052,7 +1052,7 @@ static void P_PrepareThings(lumpnum_t lumpnum)
 	Z_Free(data);
 }
 
-static void P_LoadThings(boolean loademblems)
+static void P_LoadThings(void)
 {
 	size_t i;
 	mapthing_t *mt;
@@ -1076,9 +1076,6 @@ static void P_LoadThings(boolean loademblems)
 			|| mt->type == 1701 // MT_AXISTRANSFER
 			|| mt->type == 1702) // MT_AXISTRANSFERLINE
 			continue; // These were already spawned
-
-		if (!loademblems && mt->type == mobjinfo[MT_EMBLEM].doomednum)
-			continue;
 
 		mt->mobj = NULL;
 		P_SpawnMapThing(mt);
@@ -1150,6 +1147,34 @@ static void P_LoadThings(boolean loademblems)
 				->sector->floorheight>>FRACBITS);
 
 			P_SpawnHoopsAndRings(mt, false);
+		}
+	}
+}
+
+// Load and place emblems specifically.
+void P_LoadEmblems(void)
+{
+	size_t i;
+	mapthing_t *mt;
+
+	// Loading the things lump itself into memory is now handled in P_PrepareThings, above
+
+	mt = mapthings;
+	for (i = 0; i < nummapthings; i++, mt++)
+	{
+		if (mt->type == mobjinfo[MT_EMBLEM].doomednum)
+		{
+			sector_t *mtsector = R_PointInSubsector(mt->x << FRACBITS, mt->y << FRACBITS)->sector;
+
+			// Z for objects
+			mt->z = (INT16)(
+#ifdef ESLOPE
+				mtsector->f_slope ? P_GetZAt(mtsector->f_slope, mt->x << FRACBITS, mt->y << FRACBITS) :
+#endif
+				mtsector->floorheight)>>FRACBITS;
+
+			mt->mobj = NULL;
+			P_SpawnMapThing(mt);
 		}
 	}
 }
@@ -2352,7 +2377,7 @@ void P_LoadThingsOnly(void)
 	}
 	else // phew it's just a WAD
 		P_PrepareThings(lastloadedmaplumpnum + ML_THINGS);
-	P_LoadThings(true);
+	P_LoadThings();
 
 	// restore skybox viewpoint/centerpoint if necessary, set them to defaults if we can't do that
 	skyboxmo[0] = skyboxviewpnts[(viewid >= 0) ? viewid : 0];
@@ -2643,7 +2668,6 @@ boolean P_SetupLevel(boolean skipprecip)
 	// 99% of the things already did, so.
 	// Map header should always be in place at this point
 	INT32 i, loadprecip = 1, ranspecialwipe = 0;
-	INT32 loademblems = 1;
 	INT32 fromnetsave = 0;
 	boolean loadedbm = false;
 	sector_t *ss;
@@ -2866,7 +2890,6 @@ boolean P_SetupLevel(boolean skipprecip)
 	{
 		fromnetsave = 1;
 		loadprecip = 0;
-		loademblems = 0;
 	}
 	else if (savedata.lives > 0)
 	{
@@ -3008,7 +3031,7 @@ boolean P_SetupLevel(boolean skipprecip)
 	P_ResetDynamicSlopes(fromnetsave);
 #endif
 
-	P_LoadThings(loademblems);
+	P_LoadThings();
 	skyboxmo[0] = skyboxviewpnts[0];
 	skyboxmo[1] = skyboxcenterpnts[0];
 
@@ -3212,10 +3235,8 @@ boolean P_SetupLevel(boolean skipprecip)
 	nextmapoverride = 0;
 	skipstats = 0;
 
-	if (!(netgame || multiplayer) && (!modifiedgame || savemoddata))
+	if (!modifiedgame || savemoddata)
 		mapvisited[gamemap-1] |= MV_VISITED;
-	else
-		mapvisited[gamemap-1] |= MV_MP; // you want to record that you've been there this session, but not permanently
 
 	levelloading = false;
 

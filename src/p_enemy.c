@@ -5556,6 +5556,9 @@ static boolean PIT_MinusCarry(mobj_t *thing)
 	if (minus->type == thing->type)
 		return true;
 
+	if (P_IsThingLocal(thing))
+		return true;
+
 	if (!(thing->flags & (MF_PUSHABLE|MF_ENEMY)))
 		return true;
 
@@ -13718,6 +13721,9 @@ static boolean PIT_TNTExplode(mobj_t *nearby)
 {
 	fixed_t dx, dy, dz;
 	fixed_t dm;
+
+	if (P_IsThingLocal(nearby))
+		return true;
 
 	if (nearby == barrel)
 		return true;
