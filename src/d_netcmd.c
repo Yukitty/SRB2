@@ -3200,8 +3200,6 @@ static void Command_RunSOC(void)
 	{
 		if (!P_RunSOC(fn))
 			CONS_Printf(M_GetText("Could not find SOC.\n"));
-		else
-			G_SetGameModified(multiplayer);
 		return;
 	}
 
@@ -3255,7 +3253,6 @@ static void Got_RunSOCcmd(UINT8 **cp, INT32 playernum)
 	}
 
 	P_RunSOC(filename);
-	G_SetGameModified(true);
 }
 
 /** Adds a pwad at runtime.
@@ -3292,12 +3289,13 @@ static void Command_Addfile(void)
 			CONS_Printf(M_GetText("Only the server or a remote admin can use this.\n"));
 			return;
 		}
-		G_SetGameModified(multiplayer);
 	}
 
 	// Add file on your client directly if it is trivial, or you aren't in a netgame.
 	if (!(netgame || multiplayer) || musiconly)
 	{
+		if (W_ContainsMap(fn))
+			G_SetGameModified(true);
 		P_AddWadFile(fn);
 		return;
 	}
@@ -3448,6 +3446,9 @@ static void Got_Addfilecmd(UINT8 **cp, INT32 playernum)
 		return;
 	}
 
+	if (W_ContainsMap(filename))
+		G_SetGameModified(true);
+
 	ncs = findfile(filename,md5sum,true);
 
 	if (ncs != FS_FOUND || !P_AddWadFile(filename))
@@ -3475,8 +3476,6 @@ static void Got_Addfilecmd(UINT8 **cp, INT32 playernum)
 		}
 		return;
 	}
-
-	G_SetGameModified(true);
 }
 
 static void Command_ListWADS_f(void)

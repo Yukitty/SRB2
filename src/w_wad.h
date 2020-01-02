@@ -182,5 +182,6 @@ void W_FlushCachedPatches(void);
 void W_VerifyFileMD5(UINT16 wadfilenum, const char *matchmd5);
 
 int W_VerifyNMUSlumps(const char *filename);
+boolean W_ContainsMap(const char *filename);
 
 #endif // __W_WAD__

@@ -418,8 +418,9 @@ void CL_LoadServerFiles(void)
 			continue; // Already loaded
 		else if (fileneeded[i].status == FS_FOUND)
 		{
+			if (W_ContainsMap(fileneeded[i].filename))
+				G_SetGameModified(true);
 			P_AddWadFile(fileneeded[i].filename);
-			G_SetGameModified(true);
 			fileneeded[i].status = FS_OPEN;
 		}
 		else if (fileneeded[i].status == FS_MD5SUMBAD)

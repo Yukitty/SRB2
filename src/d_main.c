@@ -1156,7 +1156,7 @@ void D_SRB2Main(void)
 
 				if (s) // Check for NULL?
 				{
-					if (!W_VerifyNMUSlumps(s))
+					if (W_ContainsMap(s))
 						G_SetGameModified(true);
 					D_AddFile(s);
 				}
